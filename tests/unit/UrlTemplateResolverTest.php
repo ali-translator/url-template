@@ -179,4 +179,22 @@ class UrlTemplateResolverTest extends TestCase
             self::assertEquals($expectedCompiledUrl, $compiledUrl);
         }
     }
+
+    /**
+     * @throws InvalidUrlException
+     */
+    public function testUrlSimplification()
+    {
+        $urlTemplateResolver = new UrlTemplateResolver($this->urlTemplateConfig);
+
+        $compiledUrl = 'https://test.pl.test.com/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
+        $simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrl);
+        self::assertEquals('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', $simplifiedUrl);
+
+        $compiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
+        $simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrl);
+        self::assertEquals('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', $simplifiedUrl);
+    }
 }

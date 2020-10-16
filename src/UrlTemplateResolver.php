@@ -134,11 +134,44 @@ class UrlTemplateResolver
             if ($simplifiedUrlPartTemplate && $simplifiedUrlPartTemplate != '/') {
                 $patternedPath = str_replace($simplifiedUrlPartTemplate, $urlPartTemplateForReplacing, $patternedPath);
             } else {
-                $patternedPath = rtrim($urlPartTemplateForReplacing,'/') . $patternedPath;
+                $patternedPath = rtrim($urlPartTemplateForReplacing, '/') . $patternedPath;
             }
         }
 
         return new ParsedUrlTemplate($patternedHost, $patternedPath, $parameters, $this->urlTemplateConfig, $urlData);
+    }
+
+    /**
+     * @param ParsedUrlTemplate $parsedUrlTemplate
+     * @return string
+     */
+    public function getSimplifiedUrl($parsedUrlTemplate)
+    {
+        $urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
+
+        $patternedHost = $parsedUrlTemplate->getPatternedHost();
+        $hostUrlParameters = $parsedUrlTemplate->getUrlTemplateConfig()->getHostUrlParameters();
+        $simplifiedHost = $patternedHost;
+        if ($patternedHost && $hostUrlParameters) {
+            foreach ($hostUrlParameters as $parameterName) {
+                $simplifiedHost = $urlPartTextTemplate->removeParameter($parameterName, $simplifiedHost, UrlPartType::TYPE_HOST);
+            }
+        }
+
+        $pathUrlParameters = $parsedUrlTemplate->getUrlTemplateConfig()->getPathUrlParameters();
+        $patternedPath = $parsedUrlTemplate->getPatternedPath();
+        $simplifiedPath = $patternedPath;
+        if ($patternedPath && $pathUrlParameters) {
+            foreach ($pathUrlParameters as $parameterName) {
+                $simplifiedPath = $urlPartTextTemplate->removeParameter($parameterName, $simplifiedPath, UrlPartType::TYPE_PATH);
+            }
+        }
+
+        $urlData = $parsedUrlTemplate->getAdditionalUrlData();
+        $urlData['host'] = $simplifiedHost;
+        $urlData['path'] = $simplifiedPath;
+
+        return $this->buildUrlFromParseUrlParts($urlData);
     }
 
     /**
@@ -147,7 +180,7 @@ class UrlTemplateResolver
      */
     protected function buildUrlFromParseUrlParts(array $urlFragments)
     {
-        return (isset($urlFragments['scheme']) ? $urlFragments['scheme'].":" : '') .
+        return (isset($urlFragments['scheme']) ? $urlFragments['scheme'] . ":" : '') .
             ((isset($urlFragments['user']) || isset($urlFragments['host'])) ? '//' : '') .
             (isset($urlFragments['user']) ? $urlFragments['user'] : '') .
             (isset($urlFragments['pass']) ? ":" . $urlFragments['pass'] : '') .

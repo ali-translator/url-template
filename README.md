@@ -38,7 +38,20 @@ $urlWithAnotherCountry = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
 var_dump($urlWithAnotherCountry);
 
 // Get clear url(without template parameters) for application routing
-// TODO
+$simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrlTemplate);
+var_dump($simplifiedUrl); // -> "https://example.com"
+
+// Generate full url from simplified url(which application return)
+$parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://example.com/some-category/item?sale=1',[
+    'country' => 'uk',
+    'city' => 'london',
+     // 'language' => 'en', // Default values may be skipped
+]);
+$compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+var_dump($compiledUrl); // -> "https://uk.example.com/london/some-category/item?sale=1"
+
+// As you may see, in url was skipped default language value "en"
+// If you want their in url, you must set "false" to last parameter on method "generateParsedUrlTemplate" 
 ```
 
 **Warning**: be careful with some free regular expressions, as for language '[a-z]{2}', will be better '(en|de|ua)'
