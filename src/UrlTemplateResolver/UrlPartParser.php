@@ -1,0 +1,172 @@
+<?php
+
+namespace ALI\UrlTemplate\UrlTemplateResolver;
+
+use ALI\UrlTemplate\Enums\UrlPartType;
+use ALI\UrlTemplate\Exceptions\InvalidUrlException;
+use ALI\UrlTemplate\TextTemplate\TextTemplate;
+use ALI\UrlTemplate\TextTemplate\UrlPartTextTemplate;
+use ALI\UrlTemplate\UrlTemplateConfig;
+
+/**
+ * Class
+ */
+class UrlPartParser
+{
+    /**
+     * @var UrlTemplateConfig
+     */
+    protected $urlTemplateConfig;
+
+    /**
+     * @var UrlPartTextTemplate
+     */
+    protected $urlPartTextTemplate;
+
+    /**
+     * @param UrlTemplateConfig $urlTemplateConfig
+     */
+    public function __construct(UrlTemplateConfig $urlTemplateConfig)
+    {
+        $this->urlTemplateConfig = $urlTemplateConfig;
+        $this->urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
+    }
+
+    /**
+     * @param $type
+     * @param $urlPart
+     * @param $parametersNames
+     * @return array
+     * @throws InvalidUrlException
+     */
+    public function parse($type, $urlPart, $parametersNames)
+    {
+        $textTemplate = $this->urlTemplateConfig->getTextTemplate();
+
+        switch ($type) {
+            case UrlPartType::TYPE_HOST:
+                $urlPartTemplate = $this->urlTemplateConfig->getHostUrlTemplate();
+                break;
+            case UrlPartType::TYPE_PATH:
+                $urlPartTemplate = $this->urlTemplateConfig->getPathUrlTemplate();
+                break;
+        }
+
+        $patternedUrlPart = null;
+        $urlPartParametersValue = [];
+        if ($urlPart && $parametersNames) {
+
+            $quotedUrlPartTemplate = $this->prepareUrlPartTemplate($type, $urlPartTemplate);
+            $parametersForReplacing = $this->generateParametersForReplacing($parametersNames);
+            $regularExpression = $this->generateRegularExpression($type, $textTemplate, $quotedUrlPartTemplate, $parametersForReplacing);
+
+            // search parameters values
+            if (!preg_match_all($regularExpression, $urlPart, $matches)) {
+                throw new InvalidUrlException();
+            }
+
+            list($urlPartParametersValue, $parametersFromUrl) = $this->bindParametersValues($parametersNames, $matches);
+
+            // generate patterned url part
+            $defaultParametersNames = array_diff($parametersNames, array_keys($parametersFromUrl));
+            foreach ($defaultParametersNames as $optionalityParameterName) {
+                $urlPartTemplate = $this->urlPartTextTemplate->removeParameter($optionalityParameterName,$urlPartTemplate, $type);
+            }
+            $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart);
+        }
+
+        return [$patternedUrlPart, $urlPartParametersValue];
+    }
+
+    /**
+     * @param $type
+     * @param $urlPartTemplate
+     * @return string|string[]
+     */
+    protected function prepareUrlPartTemplate($type, $urlPartTemplate)
+    {
+        switch ($type) {
+            case UrlPartType::TYPE_HOST:
+                $quotedUrlPartTemplate = str_replace('.', '\.', $urlPartTemplate);
+                break;
+            case UrlPartType::TYPE_PATH:
+                $quotedUrlPartTemplate = str_replace('/', '\\/', $urlPartTemplate);
+                break;
+        }
+        $optionalityParametersNames = $this->urlTemplateConfig->getOptionalityParameters();
+        foreach ($optionalityParametersNames as $optionalityParameterName) {
+            $quotedUrlPartTemplate = $this->urlPartTextTemplate->makeOptionalParameterOnRegex($optionalityParameterName, $quotedUrlPartTemplate, $type);
+        }
+
+        return $quotedUrlPartTemplate;
+    }
+
+    /**
+     * @param $parametersNames
+     * @return array
+     */
+    protected function generateParametersForReplacing($parametersNames)
+    {
+        $parametersForReplacing = [];
+        foreach ($parametersNames as $parameterName) {
+            $requirement = $this->urlTemplateConfig->getParameterRequirement($parameterName);
+            if (!$requirement) {
+                throw new \LogicException('Not found requirements for "' . $parameterName . '" parameter');
+            }
+
+            $parameterForReplacing = '(?<' . $parameterName . '>' . $requirement . ')';
+            $parametersForReplacing[$parameterName] = $parameterForReplacing;
+        }
+
+        return $parametersForReplacing;
+    }
+
+    /**
+     * @param $type
+     * @param TextTemplate $textTemplate
+     * @param array $quotedUrlPartTemplate
+     * @param string $parametersForReplacing
+     * @return string
+     */
+    protected function generateRegularExpression(
+        $type,
+        TextTemplate $textTemplate,
+        $quotedUrlPartTemplate,
+        array $parametersForReplacing
+    )
+    {
+        $regularExpression = $textTemplate->resolveParameters($quotedUrlPartTemplate, $parametersForReplacing);
+        switch ($type) {
+            case UrlPartType::TYPE_HOST:
+                $regularExpression = '/(?<=^|\.)' . $regularExpression . '/';
+                break;
+            case UrlPartType::TYPE_PATH:
+                $regularExpression = '/\\/' . trim($regularExpression, '\\/') . '\\//';
+                break;
+        }
+
+        return $regularExpression;
+    }
+
+    /**
+     * @param $parametersNames
+     * @param $matches
+     * @return array
+     */
+    protected function bindParametersValues($parametersNames, $matches)
+    {
+        $parametersFromUrl = [];
+        $urlPartParametersValue = [];
+        foreach ($parametersNames as $parameterName) {
+            if (!empty($matches[$parameterName][0])) {
+                $parameterValue = $matches[$parameterName][0];
+                $parametersFromUrl[$parameterName] = $matches[$parameterName][0];
+            } else {
+                $parameterValue = $this->urlTemplateConfig->getParametersDefaultValue()[$parameterName];
+            }
+            $urlPartParametersValue[$parameterName] = $parameterValue;
+        }
+
+        return [$urlPartParametersValue, $parametersFromUrl];
+    }
+}
