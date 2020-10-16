@@ -1,0 +1,9 @@
+version: '3.3'
+services:
+
+    php:
+         image: chialab/php:7.4-fpm
+         working_dir: /var/www/url-template
+         volumes:
+            - ./:/var/www/url-template/
+         restart: always

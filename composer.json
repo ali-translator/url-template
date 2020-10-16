@@ -1,0 +1,42 @@
+{
+    "name": "ali-translator/url-template",
+    "description": "Helping on work with template url, example: \"{country}.example.com/{language}/{city}\"",
+    "keywords": [
+        "sli",
+        "ali",
+        "url",
+        "template",
+        "url-template"
+    ],
+    "homepage": "https://sli.su/",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Slayer911",
+            "email": "garolds911@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ali-translator/url-template/issues",
+        "source": "https://github.com/ali-translator/url-template"
+    },
+    "require": {
+        "php": ">=5.6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ALI\\UrlTemplate\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ALI\\UrlTemplate\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "php": ">=7.3.0",
+        "symfony/var-dumper": "^5.0",
+        "phpunit/phpunit": "^9.0"
+    }
+}
