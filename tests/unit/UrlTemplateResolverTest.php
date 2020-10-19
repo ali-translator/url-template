@@ -218,10 +218,16 @@ class UrlTemplateResolverTest extends TestCase
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
-        $exactCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
-        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($exactCompiledUrl);
+        $expectCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectCompiledUrl);
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        self::assertEquals($exactCompiledUrl, $compiledUrl);
+        self::assertEquals($expectCompiledUrl, $compiledUrl);
+
+        $parsedUrlTemplate->setParameter('param','ss');
+        $parsedUrlTemplate->setParameter('language','de');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        $expectCompiledUrl = '/de/ss/some-path-prefix/what/?s=1&g=2&h';
+        self::assertEquals($expectCompiledUrl, $compiledUrl);
     }
 
     /**
@@ -245,9 +251,40 @@ class UrlTemplateResolverTest extends TestCase
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
-        $exactCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
-        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($exactCompiledUrl);
+        $expectCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectCompiledUrl);
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        self::assertEquals($exactCompiledUrl, $compiledUrl);
+        self::assertEquals($expectCompiledUrl, $compiledUrl);
+    }
+
+    /**
+     * @throws InvalidUrlException
+     */
+    public function testFullOptionalityUrlPathTemplate()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.test.com',
+            '/{language}/{city}/',
+            [
+                'country' => '(tr)',
+                'language' => '(en|tr)',
+                'city' => '(istanbul|ankara)',
+            ],
+            [
+                'language' => 'tr',
+                'city' => 'istanbul',
+            ]
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $expectedCompiledUrl = 'https://tr.test.com/go/spa-v-temnote/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectedCompiledUrl);
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals($expectedCompiledUrl,$compiledUrl);
+
+        $expectedCompiledUrl = 'https://tr.test.com/en/istanbul/tt/sss-v-ggg/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectedCompiledUrl);
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals($expectedCompiledUrl,$compiledUrl);
     }
 }

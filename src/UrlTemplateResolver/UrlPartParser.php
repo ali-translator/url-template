@@ -72,7 +72,7 @@ class UrlPartParser
             foreach ($defaultParametersNames as $optionalityParameterName) {
                 $urlPartTemplate = $this->urlPartTextTemplate->removeParameter($optionalityParameterName,$urlPartTemplate, $type);
             }
-            $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart);
+            $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart, 1);
         }
 
         return [$patternedUrlPart, $urlPartParametersValue];
@@ -141,7 +141,7 @@ class UrlPartParser
                 $regularExpression = '/(?<=^|\.)' . $regularExpression . '/';
                 break;
             case UrlPartType::TYPE_PATH:
-                $regularExpression = '/\\/' . trim($regularExpression, '\\/') . '\\//';
+                $regularExpression = '/\\/' . trim($regularExpression, '\\/') . '\\/?/';
                 break;
         }
 
