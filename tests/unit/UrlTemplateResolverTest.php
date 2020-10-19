@@ -7,7 +7,6 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Class
- * // TODO test work with relative url
  */
 class UrlTemplateResolverTest extends TestCase
 {
@@ -196,5 +195,59 @@ class UrlTemplateResolverTest extends TestCase
         $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
         $simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrl);
         self::assertEquals('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', $simplifiedUrl);
+    }
+
+    /**
+     * @throws InvalidUrlException
+     */
+    public function testRelativeUrlsWithAbsoluteConfig()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.{city}.test.com',
+            '/{language}/{param}/some-path-prefix/',
+            [
+                'country' => '(uk|ua|gb|pl)',
+                'language' => '[a-z]{2}', // be careful with some free regular expressions
+                'city' => '(kiev|berlin|paris|london)',
+                'param' => 's+',
+            ],
+            [
+                'city' => 'berlin',
+                'language' => 'en',
+            ]
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $exactCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($exactCompiledUrl);
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals($exactCompiledUrl, $compiledUrl);
+    }
+
+    /**
+     * @throws InvalidUrlException
+     */
+    public function testRelativeUrlsWithRelativeUrlConfig()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            null,
+            '/{language}/{param}/',
+            [
+                'country' => '(uk|ua|gb|pl)',
+                'language' => '[a-z]{2}', // be careful with some free regular expressions
+                'city' => '(kiev|berlin|paris|london)',
+                'param' => 's+',
+            ],
+            [
+                'city' => 'berlin',
+                'language' => 'en',
+            ]
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $exactCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($exactCompiledUrl);
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals($exactCompiledUrl, $compiledUrl);
     }
 }

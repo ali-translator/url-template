@@ -71,8 +71,14 @@ class UrlTemplateResolver
     public function compileUrl($parsedUrlTemplate)
     {
         $urlData = $parsedUrlTemplate->getAdditionalUrlData();
-        $urlData['host'] = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($parsedUrlTemplate->getPatternedHost(), $parsedUrlTemplate->getParameters());
-        $urlData['path'] = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($parsedUrlTemplate->getPatternedPath(), $parsedUrlTemplate->getParameters());
+        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($parsedUrlTemplate->getPatternedHost(), $parsedUrlTemplate->getParameters());
+        if ($urlHost) {
+            $urlData['host'] = $urlHost;
+        }
+        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($parsedUrlTemplate->getPatternedPath(), $parsedUrlTemplate->getParameters());
+        if ($urlPath) {
+            $urlData['path'] = $urlPath;
+        }
 
         return $this->buildUrlFromParseUrlParts($urlData);
     }
