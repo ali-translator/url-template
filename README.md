@@ -22,7 +22,8 @@ $urlTemplateConfig = new UrlTemplateConfig(
     [
         'city' => 'berlin',
         'language' => 'en',
-    ]
+    ],
+    true
 );
 $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
@@ -51,7 +52,7 @@ $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
 var_dump($compiledUrl); // -> "https://uk.example.com/london/some-category/item?sale=1"
 
 // As you may see, in url was skipped default language value "en"
-// If you want their in url, you must set "false" to last parameter on method "generateParsedUrlTemplate" 
+// If you want their in url, you must set "false" to last parameter "isHideDefaultParameters" on constructor of UrlTemplateConfig 
 ```
 
 **Warning**: be careful with some free regular expressions, as for language '[a-z]{2}', will be better '(en|de|ua)'

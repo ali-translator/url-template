@@ -48,6 +48,11 @@ class UrlTemplateConfig
     protected $parametersDefaultValue;
 
     /**
+     * @var bool
+     */
+    protected $isHideDefaultParametersFromUrl;
+
+    /**
      * @var TextTemplate
      */
     private $textTemplate;
@@ -57,12 +62,15 @@ class UrlTemplateConfig
      * @param string|null $pathUrlTemplate
      * @param string[] $parametersRequirements
      * @param array $parametersDefaultValue
+     * @param bool $isHideDefaultParametersFromUrl
+     * @param TextTemplate $textTemplate
      */
     public function __construct(
         $domainUrlTemplate,
         $pathUrlTemplate,
         array $parametersRequirements,
         array $parametersDefaultValue,
+        $isHideDefaultParametersFromUrl,
         $textTemplate = null
     )
     {
@@ -70,6 +78,7 @@ class UrlTemplateConfig
         $this->pathUrlTemplate = '/' . trim($pathUrlTemplate, '/') . '/';
         $this->parametersRequirements = $parametersRequirements;
         $this->parametersDefaultValue = $parametersDefaultValue;
+        $this->isHideDefaultParametersFromUrl = $isHideDefaultParametersFromUrl;
 
         $this->textTemplate = $textTemplate ?: new TextTemplate();
     }
@@ -217,6 +226,14 @@ class UrlTemplateConfig
     public function getParametersDefaultValue()
     {
         return $this->parametersDefaultValue;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHideDefaultParametersFromUrl()
+    {
+        return $this->isHideDefaultParametersFromUrl;
     }
 
     /**

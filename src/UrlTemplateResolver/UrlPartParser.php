@@ -65,13 +65,7 @@ class UrlPartParser
                 throw new InvalidUrlException();
             }
 
-            list($urlPartParametersValue, $parametersFromUrl) = $this->bindParametersValues($parametersNames, $matches);
-
-            // generate patterned url part
-            $defaultParametersNames = array_diff($parametersNames, array_keys($parametersFromUrl));
-            foreach ($defaultParametersNames as $optionalityParameterName) {
-                $urlPartTemplate = $this->urlPartTextTemplate->removeParameter($optionalityParameterName,$urlPartTemplate, $type);
-            }
+            $urlPartParametersValue = $this->bindParametersValues($parametersNames, $matches);
             $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart, 1);
         }
 
@@ -155,18 +149,16 @@ class UrlPartParser
      */
     protected function bindParametersValues($parametersNames, $matches)
     {
-        $parametersFromUrl = [];
         $urlPartParametersValue = [];
         foreach ($parametersNames as $parameterName) {
             if (!empty($matches[$parameterName][0])) {
                 $parameterValue = $matches[$parameterName][0];
-                $parametersFromUrl[$parameterName] = $matches[$parameterName][0];
             } else {
                 $parameterValue = $this->urlTemplateConfig->getParametersDefaultValue()[$parameterName];
             }
             $urlPartParametersValue[$parameterName] = $parameterValue;
         }
 
-        return [$urlPartParametersValue, $parametersFromUrl];
+        return $urlPartParametersValue;
     }
 }

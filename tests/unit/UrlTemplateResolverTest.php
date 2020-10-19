@@ -11,16 +11,13 @@ use PHPUnit\Framework\TestCase;
 class UrlTemplateResolverTest extends TestCase
 {
     /**
-     * @var UrlTemplateConfig
+     * Test url parsing
+     *
+     * @throws InvalidUrlException
      */
-    private $urlTemplateConfig;
-
-    /**
-     * Set up
-     */
-    protected function setUp(): void
+    public function testUrlParsing()
     {
-        $this->urlTemplateConfig = new UrlTemplateConfig(
+        $urlTemplateConfig = new UrlTemplateConfig(
             '{country}.{city}.test.com',
             '/{language}/{param}/some-path-prefix/',
             [
@@ -32,18 +29,10 @@ class UrlTemplateResolverTest extends TestCase
             [
                 'city' => 'berlin',
                 'language' => 'en',
-            ]
+            ],
+            true
         );
-    }
-
-    /**
-     * Test url parsing
-     *
-     * @throws InvalidUrlException
-     */
-    public function testUrlParsing()
-    {
-        $urlTemplateResolver = new UrlTemplateResolver($this->urlTemplateConfig);
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
         // Testing correct url, with all parameters in url
         {
@@ -56,7 +45,7 @@ class UrlTemplateResolverTest extends TestCase
                     'city' => 'paris',
                     'param' => 'ssss',
                 ],
-                $this->urlTemplateConfig,
+                $urlTemplateConfig,
                 [
                     'scheme' => 'https',
                 ]
@@ -71,15 +60,15 @@ class UrlTemplateResolverTest extends TestCase
         // Testing correct url with empty some optionality parameters
         {
             $expectParsedUrlTemplate = new ParsedUrlTemplate(
-                'test.{country}.test.com',
-                '/{param}/some-path-prefix/what/',
+                'test.{country}.{city}.test.com',
+                '/{language}/{param}/some-path-prefix/what/',
                 [
                     'country' => 'pl',
                     'city' => 'berlin',
                     'language' => 'en',
                     'param' => 'ssss',
                 ],
-                $this->urlTemplateConfig,
+                $urlTemplateConfig,
                 [
                     'scheme' => 'https',
                     'query' => 's=1&g=1',
@@ -118,24 +107,30 @@ class UrlTemplateResolverTest extends TestCase
      */
     public function testGeneratingParsedUrlTemplate()
     {
-        $urlTemplateResolver = new UrlTemplateResolver($this->urlTemplateConfig);
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.{city}.test.com',
+            '/{language}/{param}/some-path-prefix/',
+            [
+                'country' => '(uk|ua|gb|pl)',
+                'language' => '[a-z]{2}', // be careful with some free regular expressions
+                'city' => '(kiev|berlin|paris|london)',
+                'param' => 's+',
+            ],
+            [
+                'city' => 'berlin',
+                'language' => 'en',
+            ],
+            true
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
         $parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', [
             'country' => 'pl',
             'language' => 'en',
             'param' => 'ssssssss',
-        ], true);
+        ]);
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         $expectedCompiledUrl = 'https://test.pl.test.com/ssssssss/some-path-prefix/what/?s=1&g=2&h';
-        self::assertEquals($expectedCompiledUrl, $compiledUrl);
-
-        $parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', [
-            'country' => 'pl',
-            'language' => 'en',
-            'param' => 'ssssssss',
-        ], false);
-        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        $expectedCompiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         self::assertEquals($expectedCompiledUrl, $compiledUrl);
 
         $parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', [
@@ -143,7 +138,7 @@ class UrlTemplateResolverTest extends TestCase
             'param' => 'ssssssss',
             'city' => 'london',
             'language' => 'de',
-        ], true);
+        ]);
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         $expectedCompiledUrl = 'https://test.pl.london.test.com/de/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         self::assertEquals($expectedCompiledUrl, $compiledUrl);
@@ -163,7 +158,8 @@ class UrlTemplateResolverTest extends TestCase
                 [
                     'city' => 'berlin',
                     'language' => 'en',
-                ]
+                ],
+                true
             );
             $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
@@ -172,7 +168,7 @@ class UrlTemplateResolverTest extends TestCase
                 'param' => 'ssssssss',
                 'city' => 'london',
                 'language' => 'de',
-            ], true);
+            ]);
             $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
             $expectedCompiledUrl = 'https://test.pl.london.test.com/de/ssssssss/what/?s=1&g=2&h';
             self::assertEquals($expectedCompiledUrl, $compiledUrl);
@@ -180,11 +176,58 @@ class UrlTemplateResolverTest extends TestCase
     }
 
     /**
+     *
+     */
+    public function testWithoutHiddenDefautlParameters()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.{city}.test.com',
+            '/{language}/{param}/some-path-prefix/',
+            [
+                'country' => '(uk|ua|gb|pl)',
+                'language' => '[a-z]{2}', // be careful with some free regular expressions
+                'city' => '(kiev|berlin|paris|london)',
+                'param' => 's+',
+            ],
+            [
+                'city' => 'berlin',
+                'language' => 'en',
+            ],
+            false
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', [
+            'country' => 'pl',
+            'language' => 'en',
+            'param' => 'ssssssss',
+        ]);
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        $expectedCompiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        self::assertEquals($expectedCompiledUrl, $compiledUrl);
+    }
+
+    /**
      * @throws InvalidUrlException
      */
     public function testUrlSimplification()
     {
-        $urlTemplateResolver = new UrlTemplateResolver($this->urlTemplateConfig);
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.{city}.test.com',
+            '/{language}/{param}/some-path-prefix/',
+            [
+                'country' => '(uk|ua|gb|pl)',
+                'language' => '[a-z]{2}', // be careful with some free regular expressions
+                'city' => '(kiev|berlin|paris|london)',
+                'param' => 's+',
+            ],
+            [
+                'city' => 'berlin',
+                'language' => 'en',
+            ],
+            true
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
         $compiledUrl = 'https://test.pl.test.com/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
@@ -214,17 +257,18 @@ class UrlTemplateResolverTest extends TestCase
             [
                 'city' => 'berlin',
                 'language' => 'en',
-            ]
+            ],
+            true
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
-        $expectCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $expectCompiledUrl = '/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectCompiledUrl);
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals($expectCompiledUrl, $compiledUrl);
 
-        $parsedUrlTemplate->setParameter('param','ss');
-        $parsedUrlTemplate->setParameter('language','de');
+        $parsedUrlTemplate->setParameter('param', 'ss');
+        $parsedUrlTemplate->setParameter('language', 'de');
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         $expectCompiledUrl = '/de/ss/some-path-prefix/what/?s=1&g=2&h';
         self::assertEquals($expectCompiledUrl, $compiledUrl);
@@ -247,11 +291,12 @@ class UrlTemplateResolverTest extends TestCase
             [
                 'city' => 'berlin',
                 'language' => 'en',
-            ]
+            ],
+            true
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
-        $expectCompiledUrl = '/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
+        $expectCompiledUrl = '/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectCompiledUrl);
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals($expectCompiledUrl, $compiledUrl);
@@ -273,18 +318,26 @@ class UrlTemplateResolverTest extends TestCase
             [
                 'language' => 'tr',
                 'city' => 'istanbul',
-            ]
+            ],
+            true
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
         $expectedCompiledUrl = 'https://tr.test.com/go/spa-v-temnote/';
         $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectedCompiledUrl);
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        self::assertEquals($expectedCompiledUrl,$compiledUrl);
+        self::assertEquals($expectedCompiledUrl, $compiledUrl);
 
-        $expectedCompiledUrl = 'https://tr.test.com/en/istanbul/tt/sss-v-ggg/';
-        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectedCompiledUrl);
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl('https://tr.test.com/go/spa-v-temnote/');
+        $parsedUrlTemplate->setParameter('language', 'tr');
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        self::assertEquals($expectedCompiledUrl,$compiledUrl);
+        self::assertEquals('https://tr.test.com/go/spa-v-temnote/', $compiledUrl);
+        $parsedUrlTemplate->setParameter('language', 'en');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://tr.test.com/en/go/spa-v-temnote/', $compiledUrl);
+
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl('https://tr.test.com/en/istanbul/tt/sss-v-ggg/');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://tr.test.com/en/tt/sss-v-ggg/', $compiledUrl);
     }
 }

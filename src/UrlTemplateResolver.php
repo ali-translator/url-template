@@ -71,11 +71,35 @@ class UrlTemplateResolver
     public function compileUrl($parsedUrlTemplate)
     {
         $urlData = $parsedUrlTemplate->getAdditionalUrlData();
-        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($parsedUrlTemplate->getPatternedHost(), $parsedUrlTemplate->getParameters());
+
+        $parameterNamesWhichHideOnUrl = [];
+        if ($this->urlTemplateConfig->isHideDefaultParametersFromUrl()) {
+            foreach ($this->urlTemplateConfig->getParametersDefaultValue() as $defaultParameterName => $defaultParameterValue) {
+                $parsedUrlTemplateParameterValue = $parsedUrlTemplate->getParameter($defaultParameterName);
+                if ($parsedUrlTemplateParameterValue === $defaultParameterValue) {
+                    $parameterNamesWhichHideOnUrl[] = $defaultParameterName;
+                }
+            }
+        }
+
+        $urlHost = $parsedUrlTemplate->getPatternedHost();
+        foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
+            $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, [$parameterNameForRemoving => null]);
+        }
+        $urlHost = preg_replace('/\.{2,}/', '.', $urlHost);
+        $urlHost = str_replace('..', ',', $urlHost);
+
+        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $parsedUrlTemplate->getParameters());
         if ($urlHost) {
             $urlData['host'] = $urlHost;
         }
-        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($parsedUrlTemplate->getPatternedPath(), $parsedUrlTemplate->getParameters());
+
+        $urlPath = $parsedUrlTemplate->getPatternedPath();
+        foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
+            $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, [$parameterNameForRemoving => null]);
+        }
+        $urlPath = preg_replace('/\/{2,}/', '/', $urlPath);
+        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $parsedUrlTemplate->getParameters());
         if ($urlPath) {
             $urlData['path'] = $urlPath;
         }
@@ -86,10 +110,9 @@ class UrlTemplateResolver
     /**
      * @param $simplifiedUrl
      * @param $parameters
-     * @param bool $skipDefaultValuesFromUrl
      * @return ParsedUrlTemplate
      */
-    public function generateParsedUrlTemplate($simplifiedUrl, $parameters, $skipDefaultValuesFromUrl = true)
+    public function generateParsedUrlTemplate($simplifiedUrl, $parameters)
     {
         $urlData = parse_url($simplifiedUrl);
         $urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
@@ -105,7 +128,7 @@ class UrlTemplateResolver
             }
 
             $urlPartTemplateForReplacing = $urlPartTemplate;
-            if ($skipDefaultValuesFromUrl) {
+            if ($this->urlTemplateConfig->isHideDefaultParametersFromUrl()) {
                 $optionalityParameters = $this->urlTemplateConfig->getHostOptionalityParameters();
                 foreach ($optionalityParameters as $optionalityParameterName) {
                     if (empty($parameters[$optionalityParameterName]) || $parameters[$optionalityParameterName] === $this->urlTemplateConfig->getParametersDefaultValue()[$optionalityParameterName]) {
@@ -128,7 +151,7 @@ class UrlTemplateResolver
             }
 
             $urlPartTemplateForReplacing = $urlPartTemplate;
-            if ($skipDefaultValuesFromUrl) {
+            if ($this->urlTemplateConfig->isHideDefaultParametersFromUrl()) {
                 $optionalityParameters = $this->urlTemplateConfig->getPathOptionalityParameters();
                 foreach ($optionalityParameters as $optionalityParameterName) {
                     if (empty($parameters[$optionalityParameterName]) || $parameters[$optionalityParameterName] === $this->urlTemplateConfig->getParametersDefaultValue()[$optionalityParameterName]) {
@@ -137,7 +160,7 @@ class UrlTemplateResolver
                 }
             }
 
-            if ($simplifiedUrlPartTemplate && $simplifiedUrlPartTemplate != '/') {
+            if ($simplifiedUrlPartTemplate && $simplifiedUrlPartTemplate !== '/') {
                 $patternedPath = str_replace($simplifiedUrlPartTemplate, $urlPartTemplateForReplacing, $patternedPath);
             } else {
                 $patternedPath = rtrim($urlPartTemplateForReplacing, '/') . $patternedPath;
