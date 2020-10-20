@@ -1,8 +1,8 @@
 # Url Template
 
-Helping on work with templating url. <br>
-For example template url for you project was _"gb.example.com/en/london/"_.
-In this example you template url has next parameters: "country","language","city".<br>
+Helping on work with url by their "base" template. <br>
+For example, base structure of you project url was _"gb.example.com/en/london/"_.
+In this example you template url has next parameters: "country","language" and "city".<br>
 Lets create for this example temple: "{country}.example.com/{language}/{city}"<br>
 
 
