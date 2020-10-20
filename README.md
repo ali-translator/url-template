@@ -91,7 +91,7 @@ $urlTemplateConfig = new UrlTemplateConfig(
                     return 'en';
                 break;
                 default:
-                    throw new \Exception('Invalid country alias');
+                    throw new Exception('Invalid country alias');
                 break;
             }
         },
@@ -100,6 +100,9 @@ $urlTemplateConfig = new UrlTemplateConfig(
 );
 
 ``` 
+
+### Additional features
+* also you may use templates, where in one "url namespace" placed few parameters, as host "{country}-{language}-{currency}.test.com" and path "/{country}-{language}/"
 
 ### Tests
 In packet exist docker-compose file, with environment for testing.
