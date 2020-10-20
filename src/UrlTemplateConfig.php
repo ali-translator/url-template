@@ -45,7 +45,7 @@ class UrlTemplateConfig
      *
      * @var array
      */
-    protected $parametersDefaultValue;
+    protected $defaultParametersValue;
 
     /**
      * @var bool
@@ -77,7 +77,7 @@ class UrlTemplateConfig
         $this->domainUrlTemplate = $domainUrlTemplate;
         $this->pathUrlTemplate = '/' . trim($pathUrlTemplate, '/') . '/';
         $this->parametersRequirements = $parametersRequirements;
-        $this->parametersDefaultValue = $parametersDefaultValue;
+        $this->defaultParametersValue = $parametersDefaultValue;
         $this->isHideDefaultParametersFromUrl = $isHideDefaultParametersFromUrl;
 
         $this->textTemplate = $textTemplate ?: new TextTemplate();
@@ -131,7 +131,7 @@ class UrlTemplateConfig
      */
     public function isRequiredParameter($parameterName)
     {
-        return !array_key_exists($parameterName, $this->parametersDefaultValue);
+        return !array_key_exists($parameterName, $this->defaultParametersValue);
     }
 
     /**
@@ -163,14 +163,14 @@ class UrlTemplateConfig
      */
     public function getHostRequiredParameters()
     {
-        return array_diff($this->getHostUrlParameters(), array_keys($this->parametersDefaultValue));
+        return array_diff($this->getHostUrlParameters(), array_keys($this->defaultParametersValue));
     }
 
 
     /**
      * @return string[]
      */
-    public function getHostOptionalityParameters()
+    public function getHostNotRequiredParameters()
     {
         return array_diff($this->getHostUrlParameters(), $this->getHostRequiredParameters());
     }
@@ -180,13 +180,13 @@ class UrlTemplateConfig
      */
     public function getPathRequiredParameters()
     {
-        return array_diff($this->getPathUrlParameters(), array_keys($this->parametersDefaultValue));
+        return array_diff($this->getPathUrlParameters(), array_keys($this->defaultParametersValue));
     }
 
     /**
      * @return string[]
      */
-    public function getPathOptionalityParameters()
+    public function getPathNotRequiredParameters()
     {
         return array_diff($this->getPathUrlParameters(), $this->getPathRequiredParameters());
     }
@@ -196,13 +196,13 @@ class UrlTemplateConfig
      */
     public function getRequiredParameters()
     {
-        return array_diff($this->getAllParameters(), array_keys($this->parametersDefaultValue));
+        return array_diff($this->getAllParameters(), array_keys($this->defaultParametersValue));
     }
 
     /**
      * @return string[]
      */
-    public function getOptionalityParameters()
+    public function getNotRequireParameters()
     {
         return array_diff($this->getAllParameters(), $this->getRequiredParameters());
     }
@@ -211,7 +211,7 @@ class UrlTemplateConfig
      * @param string $parameterName
      * @return string|null
      */
-    public function getParameterRequirement($parameterName)
+    public function getParameterRequirements($parameterName)
     {
         if (isset($this->parametersRequirements[$parameterName])) {
             return $this->parametersRequirements[$parameterName];
@@ -223,9 +223,44 @@ class UrlTemplateConfig
     /**
      * @return array
      */
-    public function getParametersDefaultValue()
+    public function getDefaultParametersValue()
     {
-        return $this->parametersDefaultValue;
+        return $this->defaultParametersValue;
+    }
+
+    /**
+     * @param array $existedParametersValue
+     * @return array
+     * @throws \Exception
+     */
+    public function getCompiledDefaultParametersValue(array $existedParametersValue)
+    {
+        $compiledDefaultParametersValue = [];
+        foreach ($this->defaultParametersValue as $parameterName => $parameterValue) {
+            $compiledDefaultParametersValue[$parameterName] = $this->getCompiledDefaultParameterValueItem($parameterName, $existedParametersValue);
+        }
+
+        return $compiledDefaultParametersValue;
+    }
+
+    /**
+     * @param $parameterName
+     * @param array $existedParametersValue
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getCompiledDefaultParameterValueItem($parameterName, array $existedParametersValue)
+    {
+        if (!isset($this->defaultParametersValue[$parameterName])) {
+            throw new \Exception('Invalid default param name "' . $parameterName . '"');
+        }
+
+        $defaultParameterValue = $this->defaultParametersValue[$parameterName];
+        if (is_callable($defaultParameterValue)) {
+            $defaultParameterValue = call_user_func($defaultParameterValue, $existedParametersValue);
+        }
+
+        return $defaultParameterValue;
     }
 
     /**

@@ -87,7 +87,7 @@ class UrlPartParser
                 $quotedUrlPartTemplate = str_replace('/', '\\/', $urlPartTemplate);
                 break;
         }
-        $optionalityParametersNames = $this->urlTemplateConfig->getOptionalityParameters();
+        $optionalityParametersNames = $this->urlTemplateConfig->getNotRequireParameters();
         foreach ($optionalityParametersNames as $optionalityParameterName) {
             $quotedUrlPartTemplate = $this->urlPartTextTemplate->makeOptionalParameterOnRegex($optionalityParameterName, $quotedUrlPartTemplate, $type);
         }
@@ -103,7 +103,7 @@ class UrlPartParser
     {
         $parametersForReplacing = [];
         foreach ($parametersNames as $parameterName) {
-            $requirement = $this->urlTemplateConfig->getParameterRequirement($parameterName);
+            $requirement = $this->urlTemplateConfig->getParameterRequirements($parameterName);
             if (!$requirement) {
                 throw new \LogicException('Not found requirements for "' . $parameterName . '" parameter');
             }
@@ -143,22 +143,21 @@ class UrlPartParser
     }
 
     /**
-     * @param $parametersNames
-     * @param $matches
+     * @param array $parametersNames
+     * @param array $matches
      * @return array
      */
     protected function bindParametersValues($parametersNames, $matches)
     {
         $urlPartParametersValue = [];
+
+        $existedParametersValues = [];
         foreach ($parametersNames as $parameterName) {
             if (!empty($matches[$parameterName][0])) {
-                $parameterValue = $matches[$parameterName][0];
-            } else {
-                $parameterValue = $this->urlTemplateConfig->getParametersDefaultValue()[$parameterName];
+                $existedParametersValues[$parameterName] = $matches[$parameterName][0];
             }
-            $urlPartParametersValue[$parameterName] = $parameterValue;
         }
 
-        return $urlPartParametersValue;
+        return $existedParametersValues + $urlPartParametersValue;
     }
 }

@@ -4,7 +4,16 @@ Helping on work with templating url. <br>
 For example template url for you project was _"gb.example.com/en/london/"_.
 In this example you template url has next parameters: "country","language","city".<br>
 Lets create for this example temple: "{country}.example.com/{language}/{city}"<br>
-And now with code:
+
+
+## Installation
+
+```bash
+$ composer require ali-translator/url-template
+```
+
+
+## Code examle:
 ```php
 use ALI\UrlTemplate\UrlTemplateConfig;
 use ALI\UrlTemplate\UrlTemplateResolver;
@@ -31,7 +40,7 @@ $url = 'https://gb.example.com/de/london/';
 
 // Parse exist url
 $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
-var_dump($parsedUrlTemplate->getParameters());
+var_dump($parsedUrlTemplate->getFullParameters());
 
 // Change some parameter on existed url
 $parsedUrlTemplate->setParameter('country','pl');
@@ -56,6 +65,41 @@ var_dump($compiledUrl); // -> "https://uk.example.com/london/some-category/item?
 ```
 
 **Warning**: be careful with some free regular expressions, as for language '[a-z]{2}', will be better '(en|de|ua)'
+
+#### Optionality default values
+You may set optionality default value of parameter. For this you must set callable argument for default value.<br>
+**You optionality parameter must be depending only from required argument.**<br>
+Example:<br>
+
+```php
+use ALI\UrlTemplate\UrlTemplateConfig;
+
+$urlTemplateConfig = new UrlTemplateConfig(
+    '{country}.test.com',
+    '/{language}/',
+    [
+        'country' => '(tr|gb)',
+        'language' => '(en|tr|de)',
+    ],
+    [
+        'language' => function ($requiredParameters) {
+            switch ($requiredParameters['country']) {
+                case 'tr':
+                    return 'tr';
+                break;
+                case 'gb':
+                    return 'en';
+                break;
+                default:
+                    throw new \Exception('Invalid country alias');
+                break;
+            }
+        },
+    ],
+    true
+);
+
+``` 
 
 ### Tests
 In packet exist docker-compose file, with environment for testing.

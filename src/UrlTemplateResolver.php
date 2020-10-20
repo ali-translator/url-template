@@ -74,7 +74,7 @@ class UrlTemplateResolver
 
         $parameterNamesWhichHideOnUrl = [];
         if ($this->urlTemplateConfig->isHideDefaultParametersFromUrl()) {
-            foreach ($this->urlTemplateConfig->getParametersDefaultValue() as $defaultParameterName => $defaultParameterValue) {
+            foreach ($this->urlTemplateConfig->getCompiledDefaultParametersValue($parsedUrlTemplate->getOwnParameters()) as $defaultParameterName => $defaultParameterValue) {
                 $parsedUrlTemplateParameterValue = $parsedUrlTemplate->getParameter($defaultParameterName);
                 if ($parsedUrlTemplateParameterValue === $defaultParameterValue) {
                     $parameterNamesWhichHideOnUrl[] = $defaultParameterName;
@@ -89,7 +89,7 @@ class UrlTemplateResolver
         $urlHost = preg_replace('/\.{2,}/', '.', $urlHost);
         $urlHost = str_replace('..', ',', $urlHost);
 
-        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $parsedUrlTemplate->getParameters());
+        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $parsedUrlTemplate->getFullParameters());
         if ($urlHost) {
             $urlData['host'] = $urlHost;
         }
@@ -99,7 +99,7 @@ class UrlTemplateResolver
             $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, [$parameterNameForRemoving => null]);
         }
         $urlPath = preg_replace('/\/{2,}/', '/', $urlPath);
-        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $parsedUrlTemplate->getParameters());
+        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $parsedUrlTemplate->getFullParameters());
         if ($urlPath) {
             $urlData['path'] = $urlPath;
         }
@@ -117,6 +117,8 @@ class UrlTemplateResolver
         $urlData = parse_url($simplifiedUrl);
         $urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
 
+        $compiledDefaultParametersValues = $this->urlTemplateConfig->getCompiledDefaultParametersValue($parameters);
+
         $patternedHost = !empty($urlData['host']) ? $urlData['host'] : null;
         if ($patternedHost) {
             $urlPartTemplate = $this->urlTemplateConfig->getHostUrlTemplate();
@@ -129,9 +131,9 @@ class UrlTemplateResolver
 
             $urlPartTemplateForReplacing = $urlPartTemplate;
             if ($this->urlTemplateConfig->isHideDefaultParametersFromUrl()) {
-                $optionalityParameters = $this->urlTemplateConfig->getHostOptionalityParameters();
+                $optionalityParameters = $this->urlTemplateConfig->getHostNotRequiredParameters();
                 foreach ($optionalityParameters as $optionalityParameterName) {
-                    if (empty($parameters[$optionalityParameterName]) || $parameters[$optionalityParameterName] === $this->urlTemplateConfig->getParametersDefaultValue()[$optionalityParameterName]) {
+                    if (empty($parameters[$optionalityParameterName]) || $parameters[$optionalityParameterName] === $compiledDefaultParametersValues[$optionalityParameterName]) {
                         $urlPartTemplateForReplacing = $urlPartTextTemplate->removeParameter($optionalityParameterName, $urlPartTemplateForReplacing, $urlPartType);
                     }
                 }
@@ -152,9 +154,9 @@ class UrlTemplateResolver
 
             $urlPartTemplateForReplacing = $urlPartTemplate;
             if ($this->urlTemplateConfig->isHideDefaultParametersFromUrl()) {
-                $optionalityParameters = $this->urlTemplateConfig->getPathOptionalityParameters();
+                $optionalityParameters = $this->urlTemplateConfig->getPathNotRequiredParameters();
                 foreach ($optionalityParameters as $optionalityParameterName) {
-                    if (empty($parameters[$optionalityParameterName]) || $parameters[$optionalityParameterName] === $this->urlTemplateConfig->getParametersDefaultValue()[$optionalityParameterName]) {
+                    if (empty($parameters[$optionalityParameterName]) || $parameters[$optionalityParameterName] === $compiledDefaultParametersValues[$optionalityParameterName]) {
                         $urlPartTemplateForReplacing = $urlPartTextTemplate->removeParameter($optionalityParameterName, $urlPartTemplateForReplacing, $urlPartType);
                     }
                 }

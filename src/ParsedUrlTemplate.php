@@ -81,7 +81,7 @@ class ParsedUrlTemplate
      */
     public function getParameter($parameterName)
     {
-        $parameters = $this->getParameters();
+        $parameters = $this->getFullParameters();
         if (array_key_exists($parameterName, $parameters)) {
             return $parameters[$parameterName];
         }
@@ -92,9 +92,17 @@ class ParsedUrlTemplate
     /**
      * @return string[]
      */
-    public function getParameters()
+    public function getOwnParameters()
     {
-        return $this->parameters + $this->urlTemplateConfig->getParametersDefaultValue();
+        return $this->parameters;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getFullParameters()
+    {
+        return $this->parameters + $this->urlTemplateConfig->getCompiledDefaultParametersValue($this->parameters);
     }
 
 
