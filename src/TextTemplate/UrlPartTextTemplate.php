@@ -33,7 +33,11 @@ class UrlPartTextTemplate
         $parameterKey = $this->textTemplate->getParameterKey($parameterName);
         switch ($urlType) {
             case UrlPartType::TYPE_HOST:
-                $regExprUrlPartTemplate = str_replace($parameterKey . '\.', '(' . $parameterKey . '\.)?', $regExprUrlPartTemplate);
+                $regExprUrlPartTemplate = str_replace($parameterKey . '\.', '(' . $parameterKey . '\.)?', $regExprUrlPartTemplate,$replaceCount);
+                if (!$replaceCount) {
+                    // Parameter in one namespace with other parameter
+                    $regExprUrlPartTemplate = str_replace($parameterKey, '(' . $parameterKey . ')?', $regExprUrlPartTemplate, $replaceCount);
+                }
                 break;
             case UrlPartType::TYPE_PATH:
                 $regExprUrlPartTemplate = str_replace(
@@ -45,7 +49,13 @@ class UrlPartTextTemplate
                         '(' . $parameterKey . '\\/)?',
                         '(\\/' . $parameterKey . ')?',
                     ],
-                    $regExprUrlPartTemplate);
+                    $regExprUrlPartTemplate,
+                    $replaceCount
+                );
+                if (!$replaceCount) {
+                    // Parameter in one namespace with other parameter
+                    $regExprUrlPartTemplate = str_replace($parameterKey, '(' . $parameterKey . ')?', $regExprUrlPartTemplate,);
+                }
                 break;
         }
 
@@ -74,7 +84,13 @@ class UrlPartTextTemplate
                         null,
                         null,
                     ],
-                    $urlPart);
+                    $urlPart,
+                    $replaceCount
+                );
+                if (!$replaceCount) {
+                    // Parameter in one namespace with other parameter
+                    $urlPart = str_replace($parameterKey, null, $urlPart);
+                }
                 break;
         }
 

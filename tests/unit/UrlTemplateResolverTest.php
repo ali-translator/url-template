@@ -376,7 +376,7 @@ class UrlTemplateResolverTest extends TestCase
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals($originalUrl, $compiledUrl);
         // default language now must be specified by new country
-        $parsedUrlTemplate->setParameter('country','gb');
+        $parsedUrlTemplate->setParameter('country', 'gb');
         self::assertEquals('en', $parsedUrlTemplate->getParameter('language'));
         // new compiled url
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
@@ -388,10 +388,169 @@ class UrlTemplateResolverTest extends TestCase
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals($originalUrl, $compiledUrl);
         // default language now must be specified by new country
-        $parsedUrlTemplate->setParameter('country','tr');
+        $parsedUrlTemplate->setParameter('country', 'tr');
         self::assertEquals('tr', $parsedUrlTemplate->getParameter('language'));
         // new compiled url
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals('https://tr.test.com/tt/sss-v-ggg/', $compiledUrl);
+    }
+
+    /**
+     * ./vendor/bin/phpunit --filter testFewParametersOnOneNameSpace ./tests/unit/UrlTemplateResolverTest.php -vvv
+     *
+     * @throws InvalidUrlException
+     */
+    public function testFewParametersOnOneNameSpacePath()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            null,
+            '/{country}{language}/',
+            [
+                'country' => '(tr|gb)',
+                'language' => '(-en|-tr|-de)',
+            ],
+            [
+                'language' => function ($requiredParameters) {
+                    switch ($requiredParameters['country']) {
+                        case 'tr':
+                            return '-tr';
+                            break;
+                        case 'gb':
+                            return '-en';
+                            break;
+                        default:
+                            throw new \Exception('Invalid country alias');
+                            break;
+                    }
+                },
+            ],
+            true
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        // Path
+        $originalUrl = 'https://test.com/gb-de/tt/sss-v-ggg/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($originalUrl);
+        $parsedUrlTemplate->setParameter('language', '-tr');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://test.com/gb-tr/tt/sss-v-ggg/', $compiledUrl);
+
+        $parsedUrlTemplate->setParameter('language', '-en');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://test.com/gb/tt/sss-v-ggg/', $compiledUrl);
+    }
+
+    /**
+     * @throws InvalidUrlException
+     */
+    public function testFewParametersOnOneNameSpacePathAndOneOnTheMiddle()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            null,
+            '/{country}{language}-{param}/',
+            [
+                'country' => '(tr|gb)',
+                'language' => '(-en|-tr|-de)',
+                'param' => '[a-z]{2}'
+            ],
+            [
+                'language' => function ($requiredParameters) {
+                    switch ($requiredParameters['country']) {
+                        case 'tr':
+                            return '-tr';
+                            break;
+                        case 'gb':
+                            return '-en';
+                            break;
+                        default:
+                            throw new \Exception('Invalid country alias');
+                            break;
+                    }
+                },
+            ],
+            true
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        // Path
+        $originalUrl = 'https://test.com/gb-de-ss/tt/sss-v-ggg/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($originalUrl);
+        $parsedUrlTemplate->setParameter('language', '-tr');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://test.com/gb-tr-ss/tt/sss-v-ggg/', $compiledUrl);
+
+        $parsedUrlTemplate->setParameter('language', '-en');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://test.com/gb-ss/tt/sss-v-ggg/', $compiledUrl);
+
+        $urlTemplateConfig = new UrlTemplateConfig(
+            null,
+            '/{country}{language}-{param}/',
+            [
+                'country' => '(tr|gb)',
+                'language' => '(-en|-tr|-de)',
+                'param' => '[a-z]{2}'
+            ],
+            [],
+            true
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        // Without default parameter
+        $originalUrl = 'https://test.com/gb-de-ss/tt/sss-v-ggg/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($originalUrl);
+        $parsedUrlTemplate->setParameter('language', '-tr');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://test.com/gb-tr-ss/tt/sss-v-ggg/', $compiledUrl);
+
+        $parsedUrlTemplate->setParameter('language', '-en');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://test.com/gb-en-ss/tt/sss-v-ggg/', $compiledUrl);
+    }
+
+
+    /**
+     * ./vendor/bin/phpunit --filter testFewParametersOnOneNameSpaceHost ./tests/unit/UrlTemplateResolverTest.php -vvv
+     *
+     * @throws InvalidUrlException
+     */
+    public function testFewParametersOnOneNameSpaceHost()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}{language}.test.com',
+            null,
+            [
+                'country' => '(tr|gb)',
+                'language' => '(-en|-tr|-de)',
+            ],
+            [
+                'language' => function ($requiredParameters) {
+                    switch ($requiredParameters['country']) {
+                        case 'tr':
+                            return '-tr';
+                            break;
+                        case 'gb':
+                            return '-en';
+                            break;
+                        default:
+                            throw new \Exception('Invalid country alias');
+                            break;
+                    }
+                },
+            ],
+            true
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        // Path
+        $originalUrl = 'https://gb-de.test.com/tt/sss-v-ggg/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($originalUrl);
+        $parsedUrlTemplate->setParameter('language', '-tr');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://gb-tr.test.com/tt/sss-v-ggg/', $compiledUrl);
+
+        $parsedUrlTemplate->setParameter('language', '-en');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('https://gb.test.com/tt/sss-v-ggg/', $compiledUrl);
     }
 }
