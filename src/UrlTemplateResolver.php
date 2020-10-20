@@ -6,6 +6,7 @@ use ALI\UrlTemplate\Enums\UrlPartType;
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\TextTemplate\UrlPartTextTemplate;
 use ALI\UrlTemplate\UrlTemplateResolver\UrlPartParser;
+use Exception;
 
 /**
  * Class
@@ -67,10 +68,13 @@ class UrlTemplateResolver
     /**
      * @param ParsedUrlTemplate $parsedUrlTemplate
      * @return string
+     * @throws Exception
      */
     public function compileUrl($parsedUrlTemplate)
     {
         $urlData = $parsedUrlTemplate->getAdditionalUrlData();
+
+        $decoratedFullParameters = $parsedUrlTemplate->getDecoratedFullParameters();
 
         $parameterNamesWhichHideOnUrl = [];
         if ($this->urlTemplateConfig->isHideDefaultParametersFromUrl()) {
@@ -89,7 +93,7 @@ class UrlTemplateResolver
         $urlHost = preg_replace('/\.{2,}/', '.', $urlHost);
         $urlHost = str_replace('..', ',', $urlHost);
 
-        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $parsedUrlTemplate->getFullParameters());
+        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $decoratedFullParameters);
         if ($urlHost) {
             $urlData['host'] = $urlHost;
         }
@@ -99,7 +103,7 @@ class UrlTemplateResolver
             $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, [$parameterNameForRemoving => null]);
         }
         $urlPath = preg_replace('/\/{2,}/', '/', $urlPath);
-        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $parsedUrlTemplate->getFullParameters());
+        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $decoratedFullParameters);
         if ($urlPath) {
             $urlData['path'] = $urlPath;
         }

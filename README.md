@@ -23,15 +23,16 @@ $urlTemplateConfig = new UrlTemplateConfig(
     '{language}/{city}/',
     // Regular expressions that match the parameters  
     [
-        'country' => '(uk|ua|gb|pl)',
-        'language' => '(en|de)',
-        'city' => '(kiev|berlin|paris|london)',
+        'country' => ['uk','ua','pl'],
+        'language' => '[a-z]{2}', // be careful with some free regular expressions
+        'city' => ['kiev','berlin','paris','london'],
     ],
     // If you have some default parameters that may be empty in url, set them here
     [
         'city' => 'berlin',
         'language' => 'en',
     ],
+    // hide defaults parameters from url ?
     true
 );
 $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
@@ -69,7 +70,8 @@ var_dump($compiledUrl); // -> "https://uk.example.com/london/some-category/item?
 #### Optionality default values
 You may set optionality default value of parameter. For this you must set callable argument for default value.<br>
 **You optionality parameter must be depending only from required argument.**<br>
-Example:<br>
+
+Example of use:<br>
 
 ```php
 use ALI\UrlTemplate\UrlTemplateConfig;
@@ -78,8 +80,8 @@ $urlTemplateConfig = new UrlTemplateConfig(
     '{country}.test.com',
     '/{language}/',
     [
-        'country' => '(tr|gb)',
-        'language' => '(en|tr|de)',
+        'country' => ['tr','gb'],
+        'language' => ['en','tr','de'],
     ],
     [
         'language' => function ($requiredParameters) {
@@ -100,6 +102,39 @@ $urlTemplateConfig = new UrlTemplateConfig(
 );
 
 ``` 
+
+### Parameter decorators
+Sometimes you need some decoration for you parameters in url.<br>
+For example, if you want next path template to be "/{country}-{language}/", and you decide to hide default language.<br> 
+In this case, without decorators, you get the following compiled url :"/country-/"<br>
+Excessive character "-" looks bad.<br>
+You can use Decorators to solve this problem. <br>
+Decorator - class which implement "ParameterDecoratorInterface".<br>
+
+Example of use:
+```php
+use ALI\UrlTemplate\ParameterDecorators\WrapperParameterDecorator;
+use ALI\UrlTemplate\UrlTemplateConfig;
+
+$urlTemplateConfig = new UrlTemplateConfig(
+    null,
+    '/{country}{language}/',
+    [
+        'country' => ['ua', 'pl'],
+        'language' => ['ua', 'en', 'de'],
+    ],
+    [
+        'city' => 'berlin',
+        'language' => 'en',
+    ],
+    true,
+    [
+        'language' => new WrapperParameterDecorator('-'),
+    ]
+);
+```
+
+**For correct decorator works - use array on requirements, with available values, not regular expression.<br>**
 
 ### Additional features
 * also you may use templates, where in one "url namespace" placed few parameters, as host "{country}-{language}-{currency}.test.com" and path "/{country}-{language}/"

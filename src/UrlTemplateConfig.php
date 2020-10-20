@@ -2,6 +2,7 @@
 
 namespace ALI\UrlTemplate;
 
+use ALI\UrlTemplate\ParameterDecorators\ParameterDecoratorInterface;
 use ALI\UrlTemplate\TextTemplate\TextTemplate;
 
 /**
@@ -53,6 +54,11 @@ class UrlTemplateConfig
     protected $isHideDefaultParametersFromUrl;
 
     /**
+     * @var ParameterDecoratorInterface[]
+     */
+    protected $parametersDecorators;
+
+    /**
      * @var TextTemplate
      */
     private $textTemplate;
@@ -63,6 +69,7 @@ class UrlTemplateConfig
      * @param string[] $parametersRequirements
      * @param array $parametersDefaultValue
      * @param bool $isHideDefaultParametersFromUrl
+     * @param ParameterDecoratorInterface[] $parametersDecorators
      * @param TextTemplate $textTemplate
      */
     public function __construct(
@@ -71,6 +78,7 @@ class UrlTemplateConfig
         array $parametersRequirements,
         array $parametersDefaultValue,
         $isHideDefaultParametersFromUrl,
+        $parametersDecorators = [],
         $textTemplate = null
     )
     {
@@ -79,6 +87,7 @@ class UrlTemplateConfig
         $this->parametersRequirements = $parametersRequirements;
         $this->defaultParametersValue = $parametersDefaultValue;
         $this->isHideDefaultParametersFromUrl = $isHideDefaultParametersFromUrl;
+        $this->parametersDecorators = $parametersDecorators;
 
         $this->textTemplate = $textTemplate ?: new TextTemplate();
     }
@@ -153,14 +162,6 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getParametersRequirements()
-    {
-        return $this->parametersRequirements;
-    }
-
-    /**
-     * @return string[]
-     */
     public function getHostRequiredParameters()
     {
         return array_diff($this->getHostUrlParameters(), array_keys($this->defaultParametersValue));
@@ -208,16 +209,41 @@ class UrlTemplateConfig
     }
 
     /**
+     * @return string[]
+     */
+    public function getParametersRequirements()
+    {
+        return $this->parametersRequirements;
+    }
+
+    /**
      * @param string $parameterName
      * @return string|null
      */
     public function getParameterRequirements($parameterName)
     {
-        if (isset($this->parametersRequirements[$parameterName])) {
-            return $this->parametersRequirements[$parameterName];
+        if (!isset($this->parametersRequirements[$parameterName])) {
+            return null;
         }
 
-        return null;
+        $parameterRequirements = $this->parametersRequirements[$parameterName];
+
+        // Resolve by decorators
+        if (is_array($parameterRequirements)) {
+            $parameterDecorator = $this->getParameterDecorator($parameterName);
+            if ($parameterDecorator) {
+                foreach ($parameterRequirements as &$possibleParameter) {
+                    $possibleParameter = $parameterDecorator->generate($possibleParameter);
+                }
+                unset($possibleParameter);
+            }
+            $parameterRequirements = array_map(function ($val) {
+                return preg_quote($val, '/');
+            }, $parameterRequirements);
+            $parameterRequirements = '(' . implode('|', $parameterRequirements) . ')';
+        }
+
+        return $parameterRequirements;
     }
 
     /**
@@ -277,5 +303,18 @@ class UrlTemplateConfig
     public function getTextTemplate()
     {
         return $this->textTemplate;
+    }
+
+    /**
+     * @param string $parameterName
+     * @return ParameterDecoratorInterface|null
+     */
+    public function getParameterDecorator($parameterName)
+    {
+        if (isset($this->parametersDecorators[$parameterName])) {
+            return $this->parametersDecorators[$parameterName];
+        }
+
+        return null;
     }
 }

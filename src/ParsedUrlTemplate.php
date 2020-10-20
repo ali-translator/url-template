@@ -105,6 +105,21 @@ class ParsedUrlTemplate
         return $this->parameters + $this->urlTemplateConfig->getCompiledDefaultParametersValue($this->parameters);
     }
 
+    /**
+     * @return string[]
+     */
+    public function getDecoratedFullParameters()
+    {
+        $fullParameters = $this->getFullParameters();
+        foreach ($fullParameters as $parameterName => $parameterValue) {
+            $decorator = $this->urlTemplateConfig->getParameterDecorator($parameterName);
+            if ($decorator) {
+                $fullParameters[$parameterName] = $decorator->generate($parameterValue);
+            }
+        }
+
+        return $fullParameters;
+    }
 
     /**
      * @param string $parameterName

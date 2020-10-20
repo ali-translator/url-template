@@ -154,7 +154,12 @@ class UrlPartParser
         $existedParametersValues = [];
         foreach ($parametersNames as $parameterName) {
             if (!empty($matches[$parameterName][0])) {
-                $existedParametersValues[$parameterName] = $matches[$parameterName][0];
+                $parameterValue = $matches[$parameterName][0];
+                $parameterDecorator = $this->urlTemplateConfig->getParameterDecorator($parameterName);
+                if ($parameterDecorator) {
+                    $parameterValue = $parameterDecorator->parse($parameterValue);
+                }
+                $existedParametersValues[$parameterName] = $parameterValue;
             }
         }
 
