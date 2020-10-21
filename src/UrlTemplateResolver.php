@@ -65,12 +65,17 @@ class UrlTemplateResolver
         return new ParsedUrlTemplate($patternedHost, $patternedUrlPath, $parameters, $this->urlTemplateConfig, $urlData);
     }
 
+    const COMPILE_TYPE_ALL = 'all';
+    const COMPILE_TYPE_HOST = 'host';
+    const COMPILE_TYPE_PATH = 'path';
+
     /**
-     * @param ParsedUrlTemplate $parsedUrlTemplate
+     * @param $parsedUrlTemplate
+     * @param string $compileType
      * @return string
      * @throws Exception
      */
-    public function compileUrl($parsedUrlTemplate)
+    public function compileUrl($parsedUrlTemplate, $compileType = self::COMPILE_TYPE_ALL)
     {
         $urlData = $parsedUrlTemplate->getAdditionalUrlData();
 
@@ -86,26 +91,43 @@ class UrlTemplateResolver
             }
         }
 
-        $urlHost = $parsedUrlTemplate->getPatternedHost();
-        foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
-            $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, [$parameterNameForRemoving => null]);
-        }
-        $urlHost = preg_replace('/\.{2,}/', '.', $urlHost);
-        $urlHost = str_replace('..', ',', $urlHost);
+        if ($compileType === self::COMPILE_TYPE_ALL || $compileType === self::COMPILE_TYPE_HOST) {
+            $urlHost = $parsedUrlTemplate->getPatternedHost();
+            foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
+                $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, [$parameterNameForRemoving => null]);
+            }
+            $urlHost = preg_replace('/\.{2,}/', '.', $urlHost);
+            $urlHost = str_replace('..', ',', $urlHost);
 
-        $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $decoratedFullParameters);
-        if ($urlHost) {
-            $urlData['host'] = $urlHost;
+            $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $decoratedFullParameters);
+            if ($urlHost) {
+                $urlData['host'] = $urlHost;
+            }
+            if ($compileType === self::COMPILE_TYPE_HOST) {
+                $scheme = null;
+                if (!empty($urlData['scheme'])) {
+                    $scheme = $urlData['scheme'];
+                }
+                $urlData = [
+                    'host' => $urlHost,
+                    'scheme' => $scheme,
+                ];
+            }
         }
 
-        $urlPath = $parsedUrlTemplate->getPatternedPath();
-        foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
-            $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, [$parameterNameForRemoving => null]);
-        }
-        $urlPath = preg_replace('/\/{2,}/', '/', $urlPath);
-        $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $decoratedFullParameters);
-        if ($urlPath) {
-            $urlData['path'] = $urlPath;
+        if ($compileType === self::COMPILE_TYPE_ALL || $compileType === self::COMPILE_TYPE_PATH) {
+            $urlPath = $parsedUrlTemplate->getPatternedPath();
+            foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
+                $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, [$parameterNameForRemoving => null]);
+            }
+            $urlPath = preg_replace('/\/{2,}/', '/', $urlPath);
+            $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $decoratedFullParameters);
+            if ($urlPath) {
+                $urlData['path'] = $urlPath;
+            }
+            if ($compileType === self::COMPILE_TYPE_PATH) {
+                unset($urlData['scheme']);
+            }
         }
 
         return $this->buildUrlFromParseUrlParts($urlData);
