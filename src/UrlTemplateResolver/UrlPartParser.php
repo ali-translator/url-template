@@ -87,7 +87,7 @@ class UrlPartParser
                 $quotedUrlPartTemplate = str_replace('/', '\\/', $urlPartTemplate);
                 break;
         }
-        $optionalityParametersNames = $this->urlTemplateConfig->getNotRequireParameters();
+        $optionalityParametersNames = $this->urlTemplateConfig->hideDefaultParametersFromUrl();
         foreach ($optionalityParametersNames as $optionalityParameterName) {
             $quotedUrlPartTemplate = $this->urlPartTextTemplate->makeOptionalParameterOnRegex($optionalityParameterName, $quotedUrlPartTemplate, $type);
         }

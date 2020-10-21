@@ -2,10 +2,10 @@
 
 namespace ALI\UrlTemplate;
 
+use Exception;
+
 /**
  * Class
- *
- * // TODO get simplified url ?
  */
 class ParsedUrlTemplate
 {
@@ -78,6 +78,7 @@ class ParsedUrlTemplate
     /**
      * @param string $parameterName
      * @return string|null
+     * @throws Exception
      */
     public function getParameter($parameterName)
     {
@@ -99,6 +100,7 @@ class ParsedUrlTemplate
 
     /**
      * @return string[]
+     * @throws Exception
      */
     public function getFullParameters()
     {
@@ -107,6 +109,7 @@ class ParsedUrlTemplate
 
     /**
      * @return string[]
+     * @throws Exception
      */
     public function getDecoratedFullParameters()
     {
@@ -152,5 +155,22 @@ class ParsedUrlTemplate
     public function getAdditionalUrlData()
     {
         return $this->additionalUrlData;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getActualHiddenUrlParameters()
+    {
+        $parameterNamesWhichHideOnUrl = [];
+        foreach ($this->urlTemplateConfig->hideDefaultParametersFromUrl() as $hiddenParameterName) {
+            $defaultParameterValue = $this->urlTemplateConfig->getCompiledDefaultParameterValueItem($hiddenParameterName, $this->getOwnParameters());
+            $parsedUrlTemplateParameterValue = $this->getParameter($hiddenParameterName);
+            if ($parsedUrlTemplateParameterValue === $defaultParameterValue) {
+                $parameterNamesWhichHideOnUrl[] = $hiddenParameterName;
+            }
+        }
+
+        return $parameterNamesWhichHideOnUrl;
     }
 }

@@ -563,4 +563,45 @@ class UrlTemplateResolverTest extends TestCase
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals('https://gb.test.com/tt/sss-v-ggg/', $compiledUrl);
     }
+
+    /**
+     * ./vendor/bin/phpunit --filter testListedDefaultParameters ./tests/unit/UrlTemplateResolverTest.php -vvv
+     *
+     * @throws InvalidUrlException
+     */
+    public function testListedDefaultParameters()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.{domain}.com',
+            '/{language}/{city}/',
+            [
+                'country' => '(tr)',
+                'domain' => '[a-z]+',
+                'language' => '(en|tr)',
+                'city' => '(istanbul|ankara)',
+            ],
+            [
+                'language' => 'tr',
+                'city' => 'istanbul',
+                'domain' => 'test',
+            ],
+            ['domain', 'language']
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $expectedCompiledUrl = 'https://tr.com/istanbul/go/spa-v-temnote/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectedCompiledUrl);
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals($expectedCompiledUrl, $compiledUrl);
+
+        // Testing Exception. Try put url with skipped "city" parameter
+        {
+            $exception = null;
+            try {
+                $urlTemplateResolver->parseCompiledUrl('https://tr.com/go/spa-v-temnote/');
+            } catch (InvalidUrlException $exception) {
+            }
+            self::assertEquals(get_class($exception), InvalidUrlException::class);
+        }
+    }
 }

@@ -51,7 +51,7 @@ class UrlTemplateConfig
     /**
      * @var bool
      */
-    protected $isHideDefaultParametersFromUrl;
+    protected $hideDefaultParametersFromUrl;
 
     /**
      * @var ParameterDecoratorInterface[]
@@ -68,7 +68,7 @@ class UrlTemplateConfig
      * @param string|null $pathUrlTemplate
      * @param string[] $parametersRequirements
      * @param array $parametersDefaultValue
-     * @param bool $isHideDefaultParametersFromUrl
+     * @param bool|array $hideDefaultParametersFromUrl
      * @param ParameterDecoratorInterface[] $parametersDecorators
      * @param TextTemplate $textTemplate
      */
@@ -77,7 +77,7 @@ class UrlTemplateConfig
         $pathUrlTemplate,
         array $parametersRequirements,
         array $parametersDefaultValue,
-        $isHideDefaultParametersFromUrl,
+        $hideDefaultParametersFromUrl,
         $parametersDecorators = [],
         $textTemplate = null
     )
@@ -86,8 +86,14 @@ class UrlTemplateConfig
         $this->pathUrlTemplate = '/' . trim($pathUrlTemplate, '/') . '/';
         $this->parametersRequirements = $parametersRequirements;
         $this->defaultParametersValue = $parametersDefaultValue;
-        $this->isHideDefaultParametersFromUrl = $isHideDefaultParametersFromUrl;
         $this->parametersDecorators = $parametersDecorators;
+
+        if ($hideDefaultParametersFromUrl === true) {
+            $hideDefaultParametersFromUrl = array_keys($parametersDefaultValue);
+        } elseif (!is_array($hideDefaultParametersFromUrl)) {
+            $hideDefaultParametersFromUrl = [];
+        }
+        $this->hideDefaultParametersFromUrl = array_combine($hideDefaultParametersFromUrl, $hideDefaultParametersFromUrl);
 
         $this->textTemplate = $textTemplate ?: new TextTemplate();
     }
@@ -290,11 +296,20 @@ class UrlTemplateConfig
     }
 
     /**
+     * @return array
+     */
+    public function hideDefaultParametersFromUrl()
+    {
+        return $this->hideDefaultParametersFromUrl;
+    }
+
+    /**
+     * @param string $parameterName
      * @return bool
      */
-    public function isHideDefaultParametersFromUrl()
+    public function isHiddenParameter($parameterName)
     {
-        return $this->isHideDefaultParametersFromUrl;
+        return isset($this->hideDefaultParametersFromUrl[$parameterName]);
     }
 
     /**

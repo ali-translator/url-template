@@ -139,6 +139,7 @@ $urlTemplateConfig = new UrlTemplateConfig(
 ### Additional features
 * also you may use templates, where in one "url namespace" placed few parameters, as host "{country}-{language}-{currency}.test.com" and path "/{country}-{language}/"
 * If you need only compile "host url" or "path url" ``` $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_HOST) ```
+* If you need skip from url only some of default parameters - you may set array with parameters name for parameter `$hideDefaultParametersFromUrl` of `UrlTemplateConfig` class
 
 ### Tests
 In packet exist docker-compose file, with environment for testing.
