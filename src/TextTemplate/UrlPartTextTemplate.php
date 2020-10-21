@@ -54,7 +54,7 @@ class UrlPartTextTemplate
                 );
                 if (!$replaceCount) {
                     // Parameter in one namespace with other parameter
-                    $regExprUrlPartTemplate = str_replace($parameterKey, '(' . $parameterKey . ')?\\/??', $regExprUrlPartTemplate,);
+                    $regExprUrlPartTemplate = str_replace($parameterKey, '(' . $parameterKey . ')?\\/??', $regExprUrlPartTemplate);
                 }
                 break;
         }
