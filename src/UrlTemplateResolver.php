@@ -204,6 +204,17 @@ class UrlTemplateResolver
      */
     public function getSimplifiedUrl($parsedUrlTemplate)
     {
+        $urlData = $this->getSimplifiedUrlData($parsedUrlTemplate);
+
+        return $this->buildUrlFromParseUrlParts($urlData);
+    }
+
+    /**
+     * @param $parsedUrlTemplate
+     * @return string[]
+     */
+    public function getSimplifiedUrlData($parsedUrlTemplate)
+    {
         $urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
 
         $patternedHost = $parsedUrlTemplate->getPatternedHost();
@@ -228,7 +239,7 @@ class UrlTemplateResolver
         $urlData['host'] = $simplifiedHost;
         $urlData['path'] = $simplifiedPath;
 
-        return $this->buildUrlFromParseUrlParts($urlData);
+        return $urlData;
     }
 
     /**
