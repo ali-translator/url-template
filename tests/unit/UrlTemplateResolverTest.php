@@ -65,6 +65,8 @@ class UrlTemplateResolverTest extends TestCase
                 [
                     'country' => 'pl',
                     'param' => 'ssss',
+                    'city' => 'berlin',
+                    'language' => 'en',
                 ],
                 $urlTemplateConfig,
                 [
@@ -385,24 +387,24 @@ class UrlTemplateResolverTest extends TestCase
         self::assertEquals('tr', $parsedUrlTemplate->getParameter('language'));
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals($originalUrl, $compiledUrl);
-        // default language now must be specified by new country
+        // default language stay unchanged
         $parsedUrlTemplate->setParameter('country', 'gb');
-        self::assertEquals('en', $parsedUrlTemplate->getParameter('language'));
+        self::assertEquals('tr', $parsedUrlTemplate->getParameter('language'));
         // new compiled url
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        self::assertEquals('https://gb.test.com/tt/sss-v-ggg/', $compiledUrl);
+        self::assertEquals('https://gb.test.com/tr/tt/sss-v-ggg/', $compiledUrl);
 
         $originalUrl = 'https://gb.test.com/tt/sss-v-ggg/';
         $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($originalUrl);
         self::assertEquals('en', $parsedUrlTemplate->getParameter('language'));
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         self::assertEquals($originalUrl, $compiledUrl);
-        // default language now must be specified by new country
+        // default language stay unchanged
         $parsedUrlTemplate->setParameter('country', 'tr');
-        self::assertEquals('tr', $parsedUrlTemplate->getParameter('language'));
+        self::assertEquals('en', $parsedUrlTemplate->getParameter('language'));
         // new compiled url
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        self::assertEquals('https://tr.test.com/tt/sss-v-ggg/', $compiledUrl);
+        self::assertEquals('https://tr.test.com/en/tt/sss-v-ggg/', $compiledUrl);
     }
 
     /**

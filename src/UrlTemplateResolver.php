@@ -61,6 +61,7 @@ class UrlTemplateResolver
         }
 
         $parameters = $hostParametersValue + $urlPathParametersValue;
+        $parameters += $this->urlTemplateConfig->getCompiledDefaultParametersValue($parameters);
 
         return new ParsedUrlTemplate($patternedHost, $patternedUrlPath, $parameters, $this->urlTemplateConfig, $urlData);
     }
