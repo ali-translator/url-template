@@ -140,6 +140,15 @@ $urlTemplateConfig = new UrlTemplateConfig(
 * also you may use templates, where in one "url namespace" placed few parameters, as host "{country}-{language}-{currency}.test.com" and path "/{country}-{language}/"
 * If you need only compile "host url" or "path url" ``` $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_HOST) ```
 * If you need skip from url only some of default parameters - you may set array with parameters name for parameter `$hideDefaultParametersFromUrl` of `UrlTemplateConfig` class
+* If you have an optional parameter that depends on another parameter, and  this another parameter was in another part of the url(for example the optional parameter is in the "path url part", and it depends on the parameter in the "host url part"), then there can be a problem when you need to process relative url, without the host.<br>
+  To be able to leave this possibility, you need to pass a value to the function of determining the optional parameter:<br>
+    ```php
+                  ...
+                  [
+                    'language' => function ($requiredParametersValues) use ($currentCountryAlias) {
+                        $countryAlias = $requiredParametersValues['country'] ?? $currentCountryAlias;
+                  ...
+    ```
 
 ### Tests
 In packet exist docker-compose file, with environment for testing.
