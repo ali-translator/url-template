@@ -92,18 +92,11 @@ class UrlTemplateResolver
             $urlHost = str_replace('..', ',', $urlHost);
 
             $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $decoratedFullParameters);
+            if ($compileType === self::COMPILE_TYPE_HOST) {
+                return $urlHost;
+            }
             if ($urlHost) {
                 $urlData['host'] = $urlHost;
-            }
-            if ($compileType === self::COMPILE_TYPE_HOST) {
-                $scheme = null;
-                if (!empty($urlData['scheme'])) {
-                    $scheme = $urlData['scheme'];
-                }
-                $urlData = [
-                    'host' => $urlHost,
-                    'scheme' => $scheme,
-                ];
             }
         }
 

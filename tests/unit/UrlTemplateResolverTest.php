@@ -247,7 +247,7 @@ class UrlTemplateResolverTest extends TestCase
         $compiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
         $compileUrl = $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_HOST);
-        self::assertEquals('https://test.pl.test.com', $compileUrl);
+        self::assertEquals('test.pl.test.com', $compileUrl);
     }
 
     /**
@@ -463,7 +463,7 @@ class UrlTemplateResolverTest extends TestCase
             [
                 'country' => '(tr|gb)',
                 'language' => '(-en|-tr|-de)',
-                'param' => '[a-z]{2}'
+                'param' => '[a-z]{2}',
             ],
             [
                 'language' => function ($requiredParameters) {
@@ -501,7 +501,7 @@ class UrlTemplateResolverTest extends TestCase
             [
                 'country' => '(tr|gb)',
                 'language' => '(-en|-tr|-de)',
-                'param' => '[a-z]{2}'
+                'param' => '[a-z]{2}',
             ],
             [],
             true
@@ -605,5 +605,38 @@ class UrlTemplateResolverTest extends TestCase
             }
             self::assertEquals(get_class($exception), InvalidUrlException::class);
         }
+    }
+
+    /**
+     * ./vendor/bin/phpunit --filter testGenerateParsedUrlTemplate ./tests/unit/UrlTemplateResolverTest.php -vvv
+     */
+    public function testGenerateParsedUrlTemplate()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.test.com',
+            '/{language}/{city}/',
+            [
+                'country' => '(tr|uk)',
+                'language' => '(en|tr)',
+                'city' => '(istanbul|ankara)',
+            ],
+            [
+                'language' => 'tr',
+                'city' => 'istanbul',
+            ],
+            false
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $simplifiedUrl = 'http://test.com/';
+        $parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate($simplifiedUrl, []);
+        $parsedUrlTemplate->setParameters([
+            'country' => 'tr',
+            'language' => 'en',
+        ]);
+        $compiledUrlPath = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_HOST);
+        self::assertEquals('tr.test.com', $compiledUrlPath);
+        $compiledUrlHost = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_PATH);
+        self::assertEquals('/en/istanbul/', $compiledUrlHost);
     }
 }
