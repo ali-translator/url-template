@@ -27,6 +27,14 @@ class UrlTemplateResolver
     }
 
     /**
+     * @return UrlTemplateConfig
+     */
+    public function getUrlTemplateConfig()
+    {
+        return $this->urlTemplateConfig;
+    }
+
+    /**
      * @param $compiledUrl
      * @return ParsedUrlTemplate
      * @throws InvalidUrlException
