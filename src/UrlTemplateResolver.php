@@ -157,7 +157,7 @@ class UrlTemplateResolver
             $patternedHost = str_replace($simplifiedUrlPartTemplate, $urlPartTemplateForReplacing, $patternedHost);
         }
 
-        $patternedPath = !empty($urlData['path']) ? $urlData['path'] : null;
+        $patternedPath = !empty($urlData['path']) ? $urlData['path'] : '/';
         if ($patternedPath) {
             $urlPartTemplate = $this->urlTemplateConfig->getPathUrlTemplate();
             $simplifiedUrlPartTemplate = $urlPartTemplate;
