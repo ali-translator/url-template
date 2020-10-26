@@ -624,7 +624,7 @@ class UrlTemplateResolverTest extends TestCase
                 'language' => 'tr',
                 'city' => 'istanbul',
             ],
-            false
+            ['city']
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
@@ -638,7 +638,7 @@ class UrlTemplateResolverTest extends TestCase
         $compiledUrlPath = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_HOST);
         self::assertEquals('tr.test.com', $compiledUrlPath);
         $compiledUrlHost = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_PATH);
-        self::assertEquals('/en/istanbul/', $compiledUrlHost);
+        self::assertEquals('/en/', $compiledUrlHost);
 
         // Without end slash
         $simplifiedUrl = 'http://test.com';
@@ -646,10 +646,11 @@ class UrlTemplateResolverTest extends TestCase
         $parsedUrlTemplate->setParameters([
             'country' => 'tr',
             'language' => 'en',
+            'city' => 'ankara',
         ]);
         $compiledUrlPath = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_HOST);
         self::assertEquals('tr.test.com', $compiledUrlPath);
         $compiledUrlHost = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_PATH);
-        self::assertEquals('/en/istanbul/', $compiledUrlHost);
+        self::assertEquals('/en/ankara/', $compiledUrlHost);
     }
 }

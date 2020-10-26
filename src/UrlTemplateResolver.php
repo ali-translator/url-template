@@ -122,13 +122,12 @@ class UrlTemplateResolver
      * @param $simplifiedUrl
      * @param $parameters
      * @return ParsedUrlTemplate
+     * @throws Exception
      */
     public function generateParsedUrlTemplate($simplifiedUrl, $parameters)
     {
         $urlData = parse_url($simplifiedUrl);
         $urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
-
-        $compiledDefaultParametersValues = $this->urlTemplateConfig->getCompiledDefaultParametersValue($parameters);
 
         $patternedHost = !empty($urlData['host']) ? $urlData['host'] : null;
         if ($patternedHost) {
@@ -141,19 +140,6 @@ class UrlTemplateResolver
             }
 
             $urlPartTemplateForReplacing = $urlPartTemplate;
-            $optionalityParameters = $this->urlTemplateConfig->getHostNotRequiredParameters();
-            foreach ($optionalityParameters as $optionalityParameterName) {
-                if (!$this->urlTemplateConfig->isHiddenParameter($optionalityParameterName)) {
-                    continue(1);
-                }
-                if (
-                    empty($parameters[$optionalityParameterName])
-                    || $parameters[$optionalityParameterName] === $compiledDefaultParametersValues[$optionalityParameterName]
-                ) {
-                    $urlPartTemplateForReplacing = $urlPartTextTemplate->removeParameter($optionalityParameterName, $urlPartTemplateForReplacing, $urlPartType);
-                }
-            }
-
             $patternedHost = str_replace($simplifiedUrlPartTemplate, $urlPartTemplateForReplacing, $patternedHost);
         }
 
@@ -168,19 +154,6 @@ class UrlTemplateResolver
             }
 
             $urlPartTemplateForReplacing = $urlPartTemplate;
-            $optionalityParameters = $this->urlTemplateConfig->getPathNotRequiredParameters();
-            foreach ($optionalityParameters as $optionalityParameterName) {
-                if (!$this->urlTemplateConfig->isHiddenParameter($optionalityParameterName)) {
-                    continue(1);
-                }
-                if (
-                    empty($parameters[$optionalityParameterName])
-                    || $parameters[$optionalityParameterName] === $compiledDefaultParametersValues[$optionalityParameterName]
-                ) {
-                    $urlPartTemplateForReplacing = $urlPartTextTemplate->removeParameter($optionalityParameterName, $urlPartTemplateForReplacing, $urlPartType);
-                }
-            }
-
             if ($simplifiedUrlPartTemplate && $simplifiedUrlPartTemplate !== '/') {
                 $patternedPath = str_replace($simplifiedUrlPartTemplate, $urlPartTemplateForReplacing, $patternedPath);
             } else {
@@ -203,7 +176,7 @@ class UrlTemplateResolver
     }
 
     /**
-     * @param $parsedUrlTemplate
+     * @param ParsedUrlTemplate $parsedUrlTemplate
      * @return string[]
      */
     public function getSimplifiedUrlData($parsedUrlTemplate)
