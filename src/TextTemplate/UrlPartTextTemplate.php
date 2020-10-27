@@ -46,8 +46,8 @@ class UrlPartTextTemplate
                         '\\/' . $parameterKey,
                     ],
                     [
-                        '(' . $parameterKey . '\\/)?\\/??',
-                        '(\\/' . $parameterKey . ')?\\/??',
+                        '(' . $parameterKey . '\\/)?\\/?',
+                        '\\/?(\\/' . $parameterKey . ')?',
                     ],
                     $regExprUrlPartTemplate,
                     $replaceCount
