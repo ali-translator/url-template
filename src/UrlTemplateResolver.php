@@ -107,7 +107,7 @@ class UrlTemplateResolver
             }
             if ($compileType === self::COMPILE_TYPE_HOST_WITH_SCHEME) {
                 return $this->buildUrlFromParseUrlParts([
-                    'scheme' => isset($urlData['scheme']) ? $urlData['sheme'] : null,
+                    'scheme' => isset($urlData['scheme']) ? $urlData['scheme'] : null,
                     'host' => $urlHost,
                 ]);
             }
