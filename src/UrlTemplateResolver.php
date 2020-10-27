@@ -76,6 +76,7 @@ class UrlTemplateResolver
 
     const COMPILE_TYPE_ALL = 'all';
     const COMPILE_TYPE_HOST = 'host';
+    const COMPILE_TYPE_HOST_WITH_SCHEME = 'hostWithScheme';
     const COMPILE_TYPE_PATH = 'path';
 
     /**
@@ -91,7 +92,7 @@ class UrlTemplateResolver
         $decoratedFullParameters = $parsedUrlTemplate->getDecoratedFullParameters();
         $parameterNamesWhichHideOnUrl = $parsedUrlTemplate->getActualHiddenUrlParameters();
 
-        if ($compileType === self::COMPILE_TYPE_ALL || $compileType === self::COMPILE_TYPE_HOST) {
+        if (in_array($compileType, [self::COMPILE_TYPE_ALL, self::COMPILE_TYPE_HOST, self::COMPILE_TYPE_HOST_WITH_SCHEME])) {
             $urlHost = $parsedUrlTemplate->getPatternedHost();
             foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
                 $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, [$parameterNameForRemoving => null]);
@@ -100,9 +101,17 @@ class UrlTemplateResolver
             $urlHost = str_replace('..', ',', $urlHost);
 
             $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $decoratedFullParameters);
+
             if ($compileType === self::COMPILE_TYPE_HOST) {
                 return $urlHost;
             }
+            if ($compileType === self::COMPILE_TYPE_HOST_WITH_SCHEME) {
+                return $this->buildUrlFromParseUrlParts([
+                    'scheme' => isset($urlData['scheme']) ? $urlData['sheme'] : null,
+                    'host' => $urlHost,
+                ]);
+            }
+
             if ($urlHost) {
                 $urlData['host'] = $urlHost;
             }
