@@ -4,6 +4,8 @@ namespace ALI\UrlTemplate\UrlTemplateResolver;
 
 use ALI\UrlTemplate\Enums\UrlPartType;
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
+use ALI\UrlTemplate\Helpers\DuplicateParameterResolver;
+use ALI\UrlTemplate\Helpers\OptionalityParametersCombinator;
 use ALI\UrlTemplate\TextTemplate\TextTemplate;
 use ALI\UrlTemplate\TextTemplate\UrlPartTextTemplate;
 use ALI\UrlTemplate\UrlTemplateConfig;
@@ -24,12 +26,18 @@ class UrlPartParser
     protected $urlPartTextTemplate;
 
     /**
+     * @var OptionalityParametersCombinator
+     */
+    protected $optionalityParametersCombinator;
+
+    /**
      * @param UrlTemplateConfig $urlTemplateConfig
      */
     public function __construct(UrlTemplateConfig $urlTemplateConfig)
     {
         $this->urlTemplateConfig = $urlTemplateConfig;
         $this->urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
+        $this->optionalityParametersCombinator = new OptionalityParametersCombinator();
     }
 
     /**
@@ -41,7 +49,18 @@ class UrlPartParser
      */
     public function parse($type, $urlPart, $parametersNames)
     {
+        $patternedUrlPart = null;
+        $urlPartParametersValue = [];
+        if (!$urlPart || !$parametersNames) {
+            return [$patternedUrlPart, $urlPartParametersValue];
+        }
+
+        $duplicateParameterResolver = new DuplicateParameterResolver();
         $textTemplate = $this->urlTemplateConfig->getTextTemplate();
+        $optionalityParametersNames = $this->urlTemplateConfig->getHideDefaultParametersFromUrl();
+
+        $namespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '.' : '/';
+        $quotedNamespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '\.' : '\\/';
 
         switch ($type) {
             case UrlPartType::TYPE_HOST:
@@ -51,26 +70,76 @@ class UrlPartParser
                 $urlPartTemplate = $this->urlTemplateConfig->getPathUrlTemplate();
                 break;
         }
+        $urlPartTemplateNamespaceParts = explode($namespaceDelimiter, $urlPartTemplate);
+        $urlPartTemplateNamespaceParts = array_filter($urlPartTemplateNamespaceParts);
 
-        $patternedUrlPart = null;
-        $urlPartParametersValue = [];
-        if ($urlPart && $parametersNames) {
+        $allCombinationsReqExpressions = [];
+        if ($type === UrlPartType::TYPE_PATH) {
+            $allCombinationsReqExpressions[] = $quotedNamespaceDelimiter;
+        }
+        foreach ($urlPartTemplateNamespaceParts as $urlPartTemplatePartValue) {
 
-            $quotedUrlPartTemplate = $this->prepareUrlPartTemplate($type, $urlPartTemplate);
-            $parametersForReplacing = $this->generateParametersForReplacing($parametersNames);
-            $regularExpression = $this->generateRegularExpression($type, $textTemplate, $quotedUrlPartTemplate, $parametersForReplacing);
+            $namespaceParametersName = $textTemplate->parseParametersName($urlPartTemplatePartValue);
+            $namespaceCombinationsReqExpressions = [];
+            if($namespaceParametersName){
+                // namespace with parameters
+                $allCombination = $this->optionalityParametersCombinator->getAllParametersCombination($namespaceParametersName, $optionalityParametersNames);
 
-            // search parameters values
-            if (!preg_match_all($regularExpression, $urlPart, $matches)) {
-                throw new InvalidUrlException();
+                foreach ($allCombination as $currentCombinationParameters) {
+                    if (!$currentCombinationParameters) {
+                        // Combination where all parameters was skipped
+                        $namespaceCombinationsReqExpressions[] = '';
+                        continue;
+                    }
+                    // Combination where not all parameters was skipped
+                    $namespaceUrlPartTemplate = $urlPartTemplatePartValue;
+                    $parametersForReplacing = [];
+                    foreach ($namespaceParametersName as $currentNamespaceParameterName) {
+                        if (!isset($currentCombinationParameters[$currentNamespaceParameterName])) {
+                            $namespaceUrlPartTemplate = $textTemplate->resolveParameters($namespaceUrlPartTemplate, [$currentNamespaceParameterName => null]);
+                        } else {
+                            $parametersForReplacing[] = $currentNamespaceParameterName;
+                        }
+                    }
+
+                    $parametersForReplacing = $this->generateParametersForReplacing($parametersForReplacing,$duplicateParameterResolver);
+                    $namespaceCombinationsReqExpressions[] = $this->generateRegularExpression($type, $textTemplate, $namespaceUrlPartTemplate, $parametersForReplacing);
+                }
+            }else{
+                // namespace only with static text
+                $namespaceCombinationsReqExpressions[] = preg_quote($urlPartTemplatePartValue, '/');
             }
 
-            $urlPartParametersValue = $this->bindParametersValues($parametersNames, $matches);
-            $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart, 1);
+            if (count($namespaceCombinationsReqExpressions) > 1) {
+                $namespaceCombinationsReqCompiledExpressions = [];
+                foreach ($namespaceCombinationsReqExpressions as $namespaceCombinationsReqExpression) {
+                    $namespaceCombinationsReqCompiledExpressions[] = $namespaceCombinationsReqExpression ? '(' . $namespaceCombinationsReqExpression . '(' . $quotedNamespaceDelimiter . '|$)' . ')' : null;
+                }
+                $splitNamespaceReqExpression = '(' . implode('|', $namespaceCombinationsReqCompiledExpressions) . ')';
+            } else {
+                $splitNamespaceReqExpression = '(' . current($namespaceCombinationsReqExpressions). '(' . $quotedNamespaceDelimiter . '|$))';
+            }
+            $allCombinationsReqExpressions[] = $splitNamespaceReqExpression ;
         }
+
+        $regularExpression = ''.implode('',$allCombinationsReqExpressions);
+        if($type === UrlPartType::TYPE_PATH){
+            $regularExpression = '^'.$regularExpression;
+        }
+        $regularExpression = '/'.$regularExpression.'/';
+
+        // search parameters values
+        if (!preg_match_all($regularExpression, $urlPart, $matches,PREG_SET_ORDER)) {
+            throw new InvalidUrlException();
+        }
+
+        $matches = current($matches);
+        $urlPartParametersValue = $this->bindParametersValues($parametersNames, $matches, $duplicateParameterResolver);
+        $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart, 1);
 
         return [$patternedUrlPart, $urlPartParametersValue];
     }
+
 
     /**
      * @param $type
@@ -87,7 +156,7 @@ class UrlPartParser
                 $quotedUrlPartTemplate = str_replace('/', '\\/', $urlPartTemplate);
                 break;
         }
-        $optionalityParametersNames = $this->urlTemplateConfig->hideDefaultParametersFromUrl();
+        $optionalityParametersNames = $this->urlTemplateConfig->getHideDefaultParametersFromUrl();
         foreach ($optionalityParametersNames as $optionalityParameterName) {
             $quotedUrlPartTemplate = $this->urlPartTextTemplate->makeOptionalParameterOnRegex($optionalityParameterName, $quotedUrlPartTemplate, $type);
         }
@@ -96,10 +165,11 @@ class UrlPartParser
     }
 
     /**
-     * @param $parametersNames
+     * @param string[] $parametersNames
+     * @param DuplicateParameterResolver $duplicateParameterResolver
      * @return array
      */
-    protected function generateParametersForReplacing($parametersNames)
+    protected function generateParametersForReplacing($parametersNames,$duplicateParameterResolver)
     {
         $parametersForReplacing = [];
         foreach ($parametersNames as $parameterName) {
@@ -108,7 +178,7 @@ class UrlPartParser
                 throw new \LogicException('Not found requirements for "' . $parameterName . '" parameter');
             }
 
-            $parameterForReplacing = '(?<' . $parameterName . '>' . $requirement . ')';
+            $parameterForReplacing = '(?P<' . $duplicateParameterResolver->getParameterNameAlias($parameterName) . '>' . $requirement . ')';
             $parametersForReplacing[$parameterName] = $parameterForReplacing;
         }
 
@@ -118,7 +188,7 @@ class UrlPartParser
     /**
      * @param $type
      * @param TextTemplate $textTemplate
-     * @param array $quotedUrlPartTemplate
+     * @param string $quotedUrlPartTemplate
      * @param string $parametersForReplacing
      * @return string
      */
@@ -130,14 +200,14 @@ class UrlPartParser
     )
     {
         $regularExpression = $textTemplate->resolveParameters($quotedUrlPartTemplate, $parametersForReplacing);
-        switch ($type) {
-            case UrlPartType::TYPE_HOST:
-                $regularExpression = '/(?<=^|\.)' . $regularExpression . '/';
-                break;
-            case UrlPartType::TYPE_PATH:
-                $regularExpression = '/\\/' . trim($regularExpression, '\\/') . '\\/?/';
-                break;
-        }
+//        switch ($type) {
+//            case UrlPartType::TYPE_HOST:
+//                $regularExpression = '/(?<=^|\.)' . $regularExpression . '/';
+//                break;
+//            case UrlPartType::TYPE_PATH:
+//                $regularExpression = '/\\/' . trim($regularExpression, '\\/') . '\\/?/';
+//                break;
+//        }
 
         return $regularExpression;
     }
@@ -145,16 +215,17 @@ class UrlPartParser
     /**
      * @param array $parametersNames
      * @param array $matches
+     * @param DuplicateParameterResolver $duplicateParameterResolver
      * @return array
      */
-    protected function bindParametersValues($parametersNames, $matches)
+    protected function bindParametersValues($parametersNames, $matches, $duplicateParameterResolver)
     {
         $urlPartParametersValue = [];
 
         $existedParametersValues = [];
         foreach ($parametersNames as $parameterName) {
-            if (!empty($matches[$parameterName][0])) {
-                $parameterValue = $matches[$parameterName][0];
+            $parameterValue = $duplicateParameterResolver->resolverParameterNameValue($parameterName, $matches);;
+            if ($parameterValue) {
                 $parameterDecorator = $this->urlTemplateConfig->getParameterDecorator($parameterName);
                 if ($parameterDecorator) {
                     $parameterValue = $parameterDecorator->parse($parameterValue);

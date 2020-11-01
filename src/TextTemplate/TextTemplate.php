@@ -43,8 +43,8 @@ class TextTemplate
     }
 
     /**
-     * @param $text
-     * @param $parameters
+     * @param string $text
+     * @param array $parameters
      * @return string
      */
     public function resolveParameters($text, $parameters)

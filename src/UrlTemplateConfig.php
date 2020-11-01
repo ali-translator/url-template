@@ -298,7 +298,7 @@ class UrlTemplateConfig
     /**
      * @return array
      */
-    public function hideDefaultParametersFromUrl()
+    public function getHideDefaultParametersFromUrl()
     {
         return $this->hideDefaultParametersFromUrl;
     }

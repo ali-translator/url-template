@@ -163,7 +163,7 @@ class ParsedUrlTemplate
     public function getActualHiddenUrlParameters()
     {
         $parameterNamesWhichHideOnUrl = [];
-        foreach ($this->urlTemplateConfig->hideDefaultParametersFromUrl() as $hiddenParameterName) {
+        foreach ($this->urlTemplateConfig->getHideDefaultParametersFromUrl() as $hiddenParameterName) {
             $defaultParameterValue = $this->urlTemplateConfig->getCompiledDefaultParameterValueItem($hiddenParameterName, $this->getOwnParameters());
             $parsedUrlTemplateParameterValue = $this->getParameter($hiddenParameterName);
             if ($parsedUrlTemplateParameterValue === $defaultParameterValue) {

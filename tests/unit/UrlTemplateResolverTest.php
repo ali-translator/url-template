@@ -3,6 +3,7 @@
 namespace ALI\UrlTemplate;
 
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
+use ALI\UrlTemplate\ParameterDecorators\WrapperParameterDecorator;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,6 +13,8 @@ class UrlTemplateResolverTest extends TestCase
 {
     /**
      * Test url parsing
+     *
+     * ./vendor/bin/phpunit --filter testUrlParsing ./tests/unit/UrlTemplateResolverTest.php -vvv
      *
      * @throws InvalidUrlException
      */
@@ -36,6 +39,7 @@ class UrlTemplateResolverTest extends TestCase
 
         // Testing correct url, with all parameters in url
         {
+
             $expectParsedUrlTemplate = new ParsedUrlTemplate(
                 'test.{country}.{city}.test.com',
                 '/{language}/{param}/some-path-prefix/what/',
@@ -51,6 +55,7 @@ class UrlTemplateResolverTest extends TestCase
                 ]
             );
             $expectedCompileUrl = 'https://test.pl.paris.test.com/de/ssss/some-path-prefix/what/';
+
             $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectedCompileUrl);
             self::assertEquals($expectParsedUrlTemplate, $parsedUrlTemplate);
             $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
@@ -408,7 +413,7 @@ class UrlTemplateResolverTest extends TestCase
     }
 
     /**
-     * ./vendor/bin/phpunit --filter testFewParametersOnOneNameSpace ./tests/unit/UrlTemplateResolverTest.php -vvv
+     * ./vendor/bin/phpunit --filter testFewParametersOnOneNameSpacePath ./tests/unit/UrlTemplateResolverTest.php -vvv
      *
      * @throws InvalidUrlException
      */
@@ -436,7 +441,7 @@ class UrlTemplateResolverTest extends TestCase
                     }
                 },
             ],
-            true
+            ['language']
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
@@ -462,7 +467,7 @@ class UrlTemplateResolverTest extends TestCase
             '/{country}{language}-{param}/',
             [
                 'country' => '(tr|gb)',
-                'language' => '(-en|-tr|-de)',
+                'language' => '(\-en|\-tr|\-de)',
                 'param' => '[a-z]{2}',
             ],
             [
@@ -550,7 +555,7 @@ class UrlTemplateResolverTest extends TestCase
                     }
                 },
             ],
-            true
+            ['language']
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
@@ -652,5 +657,57 @@ class UrlTemplateResolverTest extends TestCase
         self::assertEquals('tr.test.com', $compiledUrlPath);
         $compiledUrlHost = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_PATH);
         self::assertEquals('/en/ankara/', $compiledUrlHost);
+    }
+
+
+    /**
+     * ./vendor/bin/phpunit --filter testUrlsWithBugs ./tests/unit/UrlTemplateResolverTest.php -vvv
+     */
+    public function testUrlsWithBugs()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            'www.test.com',
+            '/{country}{language}/{city}/',
+            [
+                'country' => ['gb'],
+                'language' => ['en'],
+                'city' => 'london',
+            ],
+            [
+                'language' => 'en',
+                'city' => 'london',
+            ],
+            ['language', 'city'],
+            [
+                'language' => new WrapperParameterDecorator('-'),
+            ]
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+//        preg_match(
+//            // (((?<city>london)\/)|)
+//            '/(?J)\/(((?<country>(gb))(?<language>(\-en))\/)|((?<country>(gb))\/))/',
+//            'http://www.test.com/gb-en/some-path/',
+//            $match
+//        );
+//        dd($match);
+
+        // Without end slash
+//        $compiledUrl = 'http://www.test.com/ua-ss/some-path/';
+//        $compiledUrl = 'http://www.test.com/gb-en/some-path/';
+//        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
+
+        // Testing Exception. Host url without required parameter "country"
+        {
+            $exception = null;
+            try {
+                $urlTemplateResolver->parseCompiledUrl('http://www.test.com/ua-ss/some-path/');
+            } catch (InvalidUrlException $exception) {
+            }
+            self::assertEquals(get_class($exception), InvalidUrlException::class);
+        }
+
+
+//        dd($parsedUrlTemplate);
     }
 }
