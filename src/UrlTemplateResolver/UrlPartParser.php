@@ -6,7 +6,6 @@ use ALI\UrlTemplate\Enums\UrlPartType;
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\Helpers\DuplicateParameterResolver;
 use ALI\UrlTemplate\Helpers\OptionalityParametersCombinator;
-use ALI\UrlTemplate\TextTemplate\TextTemplate;
 use ALI\UrlTemplate\TextTemplate\UrlPartTextTemplate;
 use ALI\UrlTemplate\UrlTemplateConfig;
 
@@ -56,11 +55,6 @@ class UrlPartParser
         }
 
         $duplicateParameterResolver = new DuplicateParameterResolver();
-        $textTemplate = $this->urlTemplateConfig->getTextTemplate();
-        $optionalityParametersNames = $this->urlTemplateConfig->getHideDefaultParametersFromUrl();
-
-        $namespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '.' : '/';
-        $quotedNamespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '\.' : '\\/';
 
         switch ($type) {
             case UrlPartType::TYPE_HOST:
@@ -70,6 +64,45 @@ class UrlPartParser
                 $urlPartTemplate = $this->urlTemplateConfig->getPathUrlTemplate();
                 break;
         }
+
+        $regularExpression = $this->generateRegularExpression($type, $urlPartTemplate, $duplicateParameterResolver);
+
+        // search parameters values
+        if (!preg_match_all($regularExpression, $urlPart, $matches, PREG_SET_ORDER)) {
+            throw new InvalidUrlException();
+        }
+
+        $matches = current($matches);
+        $urlPartParametersValue = $this->bindParametersValues($parametersNames, $matches, $duplicateParameterResolver);
+        $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart, 1);
+
+        return [$patternedUrlPart, $urlPartParametersValue];
+    }
+
+    /**
+     * @var string[]
+     */
+    protected $regularExpressions = [];
+
+    /**
+     * @param string $type
+     * @param string $urlPartTemplate
+     * @param DuplicateParameterResolver $duplicateParameterResolver
+     * @return string
+     */
+    protected function generateRegularExpression($type, $urlPartTemplate, $duplicateParameterResolver)
+    {
+        if(isset($this->regularExpressions[$urlPartTemplate])){
+            return $this->regularExpressions[$urlPartTemplate];
+        }
+
+        $textTemplate = $this->urlTemplateConfig->getTextTemplate();
+        $optionalityParametersNames = $this->urlTemplateConfig->getHideDefaultParametersFromUrl();
+
+        $namespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '.' : '/';
+        $quotedNamespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '\.' : '\\/';
+
+
         $urlPartTemplateNamespaceParts = explode($namespaceDelimiter, $urlPartTemplate);
         $urlPartTemplateNamespaceParts = array_filter($urlPartTemplateNamespaceParts);
 
@@ -81,7 +114,7 @@ class UrlPartParser
 
             $namespaceParametersName = $textTemplate->parseParametersName($urlPartTemplatePartValue);
             $namespaceCombinationsReqExpressions = [];
-            if($namespaceParametersName){
+            if ($namespaceParametersName) {
                 // namespace with parameters
                 $allCombination = $this->optionalityParametersCombinator->getAllParametersCombination($namespaceParametersName, $optionalityParametersNames);
 
@@ -102,10 +135,10 @@ class UrlPartParser
                         }
                     }
 
-                    $parametersForReplacing = $this->generateParametersForReplacing($parametersForReplacing,$duplicateParameterResolver);
-                    $namespaceCombinationsReqExpressions[] = $this->generateRegularExpression($type, $textTemplate, $namespaceUrlPartTemplate, $parametersForReplacing);
+                    $parametersForReplacing = $this->generateParametersForReplacing($parametersForReplacing, $duplicateParameterResolver);
+                    $namespaceCombinationsReqExpressions[] = $textTemplate->resolveParameters($namespaceUrlPartTemplate, $parametersForReplacing);
                 }
-            }else{
+            } else {
                 // namespace only with static text
                 $namespaceCombinationsReqExpressions[] = preg_quote($urlPartTemplatePartValue, '/');
             }
@@ -117,51 +150,18 @@ class UrlPartParser
                 }
                 $splitNamespaceReqExpression = '(' . implode('|', $namespaceCombinationsReqCompiledExpressions) . ')';
             } else {
-                $splitNamespaceReqExpression = '(' . current($namespaceCombinationsReqExpressions). '(' . $quotedNamespaceDelimiter . '|$))';
+                $splitNamespaceReqExpression = '(' . current($namespaceCombinationsReqExpressions) . '(' . $quotedNamespaceDelimiter . '|$))';
             }
-            $allCombinationsReqExpressions[] = $splitNamespaceReqExpression ;
+            $allCombinationsReqExpressions[] = $splitNamespaceReqExpression;
         }
 
-        $regularExpression = ''.implode('',$allCombinationsReqExpressions);
-        if($type === UrlPartType::TYPE_PATH){
-            $regularExpression = '^'.$regularExpression;
+        $regularExpression = '' . implode('', $allCombinationsReqExpressions);
+        if ($type === UrlPartType::TYPE_PATH) {
+            $regularExpression = '^' . $regularExpression;
         }
-        $regularExpression = '/'.$regularExpression.'/';
+        $this->regularExpressions[$urlPartTemplate] = '/' . $regularExpression . '/';
 
-        // search parameters values
-        if (!preg_match_all($regularExpression, $urlPart, $matches,PREG_SET_ORDER)) {
-            throw new InvalidUrlException();
-        }
-
-        $matches = current($matches);
-        $urlPartParametersValue = $this->bindParametersValues($parametersNames, $matches, $duplicateParameterResolver);
-        $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart, 1);
-
-        return [$patternedUrlPart, $urlPartParametersValue];
-    }
-
-
-    /**
-     * @param $type
-     * @param $urlPartTemplate
-     * @return string|string[]
-     */
-    protected function prepareUrlPartTemplate($type, $urlPartTemplate)
-    {
-        switch ($type) {
-            case UrlPartType::TYPE_HOST:
-                $quotedUrlPartTemplate = str_replace('.', '\.', $urlPartTemplate);
-                break;
-            case UrlPartType::TYPE_PATH:
-                $quotedUrlPartTemplate = str_replace('/', '\\/', $urlPartTemplate);
-                break;
-        }
-        $optionalityParametersNames = $this->urlTemplateConfig->getHideDefaultParametersFromUrl();
-        foreach ($optionalityParametersNames as $optionalityParameterName) {
-            $quotedUrlPartTemplate = $this->urlPartTextTemplate->makeOptionalParameterOnRegex($optionalityParameterName, $quotedUrlPartTemplate, $type);
-        }
-
-        return $quotedUrlPartTemplate;
+        return $this->regularExpressions[$urlPartTemplate];
     }
 
     /**
@@ -169,7 +169,7 @@ class UrlPartParser
      * @param DuplicateParameterResolver $duplicateParameterResolver
      * @return array
      */
-    protected function generateParametersForReplacing($parametersNames,$duplicateParameterResolver)
+    protected function generateParametersForReplacing($parametersNames, $duplicateParameterResolver)
     {
         $parametersForReplacing = [];
         foreach ($parametersNames as $parameterName) {
@@ -183,33 +183,6 @@ class UrlPartParser
         }
 
         return $parametersForReplacing;
-    }
-
-    /**
-     * @param $type
-     * @param TextTemplate $textTemplate
-     * @param string $quotedUrlPartTemplate
-     * @param string $parametersForReplacing
-     * @return string
-     */
-    protected function generateRegularExpression(
-        $type,
-        TextTemplate $textTemplate,
-        $quotedUrlPartTemplate,
-        array $parametersForReplacing
-    )
-    {
-        $regularExpression = $textTemplate->resolveParameters($quotedUrlPartTemplate, $parametersForReplacing);
-//        switch ($type) {
-//            case UrlPartType::TYPE_HOST:
-//                $regularExpression = '/(?<=^|\.)' . $regularExpression . '/';
-//                break;
-//            case UrlPartType::TYPE_PATH:
-//                $regularExpression = '/\\/' . trim($regularExpression, '\\/') . '\\/?/';
-//                break;
-//        }
-
-        return $regularExpression;
     }
 
     /**

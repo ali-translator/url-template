@@ -667,35 +667,36 @@ class UrlTemplateResolverTest extends TestCase
     {
         $urlTemplateConfig = new UrlTemplateConfig(
             'www.test.com',
-            '/{country}{language}/{city}/',
+            '/{country}{language}/{city}/{a}{b}{c}{d}/',
             [
                 'country' => ['gb'],
                 'language' => ['en'],
                 'city' => 'london',
+                'a' => ['a'],
+                'b' => ['b'],
+                'c' => ['c'],
+                'd' => ['d'],
             ],
             [
                 'language' => 'en',
                 'city' => 'london',
             ],
-            ['language', 'city'],
+            ['language', 'city','a','b','c','d'],
             [
                 'language' => new WrapperParameterDecorator('-'),
             ]
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
-//        preg_match(
-//            // (((?<city>london)\/)|)
-//            '/(?J)\/(((?<country>(gb))(?<language>(\-en))\/)|((?<country>(gb))\/))/',
-//            'http://www.test.com/gb-en/some-path/',
-//            $match
-//        );
-//        dd($match);
+        // filled some of optionality parameters on one namespace
+        $compiledUrl = 'http://www.test.com/gb-en/d/some-path/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
+        self::assertEquals(null,$parsedUrlTemplate->getParameter('a'));
+        self::assertEquals('d',$parsedUrlTemplate->getParameter('d'));
 
-        // Without end slash
-//        $compiledUrl = 'http://www.test.com/ua-ss/some-path/';
-//        $compiledUrl = 'http://www.test.com/gb-en/some-path/';
-//        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
+        // without exceptions
+        $compiledUrl = 'http://www.test.com/gb-en/some-path/';
+        $urlTemplateResolver->parseCompiledUrl($compiledUrl);
 
         // Testing Exception. Host url without required parameter "country"
         {
@@ -706,8 +707,5 @@ class UrlTemplateResolverTest extends TestCase
             }
             self::assertEquals(get_class($exception), InvalidUrlException::class);
         }
-
-
-//        dd($parsedUrlTemplate);
     }
 }
