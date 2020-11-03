@@ -234,20 +234,10 @@ class UrlTemplateResolverTest extends TestCase
         );
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
-        $compiledUrl = 'https://test.pl.test.com/ssssssss/some-path-prefix/what/?s=1&g=2&h';
-        $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
-        $simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrl);
-        self::assertEquals('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', $simplifiedUrl);
-
         $compiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
-        $simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrl);
-        self::assertEquals('https://test.test.com/some-path-prefix/what/?s=1&g=2&h', $simplifiedUrl);
-
-        $compiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
-        $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
-        $compileUrl = $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_PATH);
-        self::assertEquals('/ssssssss/some-path-prefix/what/?s=1&g=2&h', $compileUrl);
+        $simplifiedUrlData = $urlTemplateResolver->getSimplifiedUrlData($parsedUrl);
+        self::assertEquals('/what/', $simplifiedUrlData['path']);
 
         $compiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
