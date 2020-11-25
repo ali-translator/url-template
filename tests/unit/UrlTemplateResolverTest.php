@@ -70,8 +70,6 @@ class UrlTemplateResolverTest extends TestCase
                 [
                     'country' => 'pl',
                     'param' => 'ssss',
-                    'city' => 'berlin',
-                    'language' => 'en',
                 ],
                 $urlTemplateConfig,
                 [
@@ -659,7 +657,6 @@ class UrlTemplateResolverTest extends TestCase
         self::assertEquals('/en/ankara/', $compiledUrlHost);
     }
 
-
     /**
      * ./vendor/bin/phpunit --filter testUrlsWithBugs ./tests/unit/UrlTemplateResolverTest.php -vvv
      */
@@ -681,7 +678,7 @@ class UrlTemplateResolverTest extends TestCase
                 'language' => 'en',
                 'city' => 'london',
             ],
-            ['language', 'city','a','b','c','d'],
+            ['language', 'city', 'a', 'b', 'c', 'd'],
             [
                 'language' => new WrapperParameterDecorator('-'),
             ]
@@ -691,8 +688,8 @@ class UrlTemplateResolverTest extends TestCase
         // filled some of optionality parameters on one namespace
         $compiledUrl = 'http://www.test.com/gb-en/d/some-path/';
         $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
-        self::assertEquals(null,$parsedUrlTemplate->getParameter('a'));
-        self::assertEquals('d',$parsedUrlTemplate->getParameter('d'));
+        self::assertEquals(null, $parsedUrlTemplate->getParameter('a'));
+        self::assertEquals('d', $parsedUrlTemplate->getParameter('d'));
 
         // without exceptions
         $compiledUrl = 'http://www.test.com/gb-en/some-path/';
@@ -707,5 +704,52 @@ class UrlTemplateResolverTest extends TestCase
             }
             self::assertEquals(get_class($exception), InvalidUrlException::class);
         }
+    }
+
+    /**
+     * ./vendor/bin/phpunit --filter testExcessiveOwnParameters ./tests/unit/UrlTemplateResolverTest.php -vvv
+     */
+    public function testExcessiveOwnParameters()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{city}.test.com',
+            '/{country}/{language}/',
+            [
+                'country' => ['gb'],
+                'language' => ['en'],
+                'city' => 'london',
+            ],
+            [
+                'language' => 'en',
+                'city' => 'london',
+            ],
+            ['language', 'city', 'a', 'b']
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $url = 'https://london.test.com/gb/en/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
+        $excessiveOwnParameters = $parsedUrlTemplate->getExcessiveOwnParameters();
+        $this->assertEquals([
+            'city' => 'london',
+            'language' => 'en',
+        ], $excessiveOwnParameters);
+
+        $url = 'https://test.com/gb/en/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
+        $excessiveOwnParameters = $parsedUrlTemplate->getExcessiveOwnParameters();
+        $this->assertEquals([
+            'language' => 'en',
+        ], $excessiveOwnParameters);
+
+        $url = 'https://test.com/gb/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
+        $excessiveOwnParameters = $parsedUrlTemplate->getExcessiveOwnParameters();
+        $this->assertEquals([], $excessiveOwnParameters);
+
+        $url = 'https://test.com/gb/test/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
+        $excessiveOwnParameters = $parsedUrlTemplate->getExcessiveOwnParameters();
+        $this->assertEquals([], $excessiveOwnParameters);
     }
 }

@@ -25,6 +25,11 @@ class ParsedUrlTemplate
     protected $parameters;
 
     /**
+     * @var static[]
+     */
+    protected $compiledDefaultParametersValue;
+
+    /**
      * @var UrlTemplateConfig
      */
     protected $urlTemplateConfig;
@@ -53,6 +58,8 @@ class ParsedUrlTemplate
         $this->patternedPath = $patternedPath;
         $this->parameters = $parameters;
         $this->urlTemplateConfig = $urlTemplateConfig;
+
+        $this->compiledDefaultParametersValue = $this->urlTemplateConfig->getCompiledDefaultParametersValue($this->parameters);
 
         unset($additionalUrlData['host']);
         unset($additionalUrlData['path']);
@@ -99,12 +106,48 @@ class ParsedUrlTemplate
     }
 
     /**
+     * @return array
+     * @throws Exception
+     */
+    public function getOwnDefaultParameters()
+    {
+        $defaultParameters = $this->compiledDefaultParametersValue;
+
+        $defaultOwnParameters = [];
+        foreach ($this->parameters as $parameterName => $ownParameterValue) {
+            if (isset($defaultParameters[$parameterName]) && $defaultParameters[$parameterName] === $ownParameterValue) {
+                $defaultOwnParameters[$parameterName] = $ownParameterValue;
+            }
+        }
+
+        return $defaultOwnParameters;
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function getExcessiveOwnParameters()
+    {
+        $defaultOwnParameters = $this->getOwnDefaultParameters();
+
+        $excessiveOwnParameters = [];
+        foreach ($defaultOwnParameters as $parameterName => $parameterValue) {
+            if ($this->urlTemplateConfig->isHiddenParameter($parameterName)) {
+                $excessiveOwnParameters[$parameterName] = $parameterValue;
+            }
+        }
+
+        return $excessiveOwnParameters;
+    }
+
+    /**
      * @return string[]
      * @throws Exception
      */
     public function getFullParameters()
     {
-        return $this->parameters + $this->urlTemplateConfig->getCompiledDefaultParametersValue($this->parameters);
+        return $this->parameters + $this->compiledDefaultParametersValue;
     }
 
     /**
