@@ -169,6 +169,14 @@ class ParsedUrlTemplate
 
     /**
      * @param string $parameterName
+     */
+    public function unsetParameter($parameterName)
+    {
+        unset($this->parameters[$parameterName]);
+    }
+
+    /**
+     * @param string $parameterName
      * @param string $parameterValue
      */
     public function setParameter($parameterName, $parameterValue)

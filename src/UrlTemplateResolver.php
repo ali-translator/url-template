@@ -182,39 +182,22 @@ class UrlTemplateResolver
 
     /**
      * @param ParsedUrlTemplate $parsedUrlTemplate
-     * @return string
-     */
-    public function getSimplifiedUrl($parsedUrlTemplate)
-    {
-        $urlData = $this->getSimplifiedUrlData($parsedUrlTemplate);
-
-        return $this->buildUrlFromParseUrlParts($urlData);
-    }
-
-    /**
-     * @param ParsedUrlTemplate $parsedUrlTemplate
      * @return string[]
      */
     public function getSimplifiedUrlData($parsedUrlTemplate)
     {
-        $urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
-
+        $patternedTemplateHost = $parsedUrlTemplate->getUrlTemplateConfig()->getHostUrlTemplate();
         $patternedHost = $parsedUrlTemplate->getPatternedHost();
-        $hostUrlParameters = $parsedUrlTemplate->getUrlTemplateConfig()->getHostUrlParameters();
-        $simplifiedHost = $patternedHost;
-        if ($patternedHost && $hostUrlParameters) {
-            foreach ($hostUrlParameters as $parameterName) {
-                $simplifiedHost = $urlPartTextTemplate->removeParameter($parameterName, $simplifiedHost, UrlPartType::TYPE_HOST);
-            }
+        $simplifiedHost = str_replace($patternedTemplateHost, null, $patternedHost);
+        if (!$simplifiedHost || $simplifiedHost[0] !== '.') {
+            $simplifiedHost = '.' . $simplifiedHost;
         }
 
-        $pathUrlParameters = $parsedUrlTemplate->getUrlTemplateConfig()->getPathUrlParameters();
+        $patternedTemplatePath = $parsedUrlTemplate->getUrlTemplateConfig()->getPathUrlTemplate();
         $patternedPath = $parsedUrlTemplate->getPatternedPath();
-        $simplifiedPath = $patternedPath;
-        if ($patternedPath && $pathUrlParameters) {
-            foreach ($pathUrlParameters as $parameterName) {
-                $simplifiedPath = $urlPartTextTemplate->removeParameter($parameterName, $simplifiedPath, UrlPartType::TYPE_PATH);
-            }
+        $simplifiedPath = str_replace($patternedTemplatePath, null, $patternedPath);
+        if (!$simplifiedPath || $simplifiedPath[0] !== '/') {
+            $simplifiedPath = '/' . $simplifiedPath;
         }
 
         $urlData = $parsedUrlTemplate->getAdditionalUrlData();
