@@ -5,6 +5,7 @@ namespace ALI\UrlTemplate;
 use ALI\UrlTemplate\Enums\UrlPartType;
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\Exceptions\MissingRequiredUrlParametersException;
+use ALI\UrlTemplate\Helpers\UrlPartsConverter;
 use ALI\UrlTemplate\TextTemplate\UrlPartTextTemplate;
 use ALI\UrlTemplate\UrlTemplateResolver\UrlPartParser;
 use Exception;
@@ -20,11 +21,17 @@ class UrlTemplateResolver
     protected $urlTemplateConfig;
 
     /**
+     * @var UrlPartsConverter
+     */
+    protected $urlPartsConverter;
+
+    /**
      * @param UrlTemplateConfig $urlTemplateConfig
      */
     public function __construct(UrlTemplateConfig $urlTemplateConfig)
     {
         $this->urlTemplateConfig = $urlTemplateConfig;
+        $this->urlPartsConverter = new UrlPartsConverter();
     }
 
     /**
@@ -33,6 +40,14 @@ class UrlTemplateResolver
     public function getUrlTemplateConfig()
     {
         return $this->urlTemplateConfig;
+    }
+
+    /**
+     * @return UrlPartsConverter
+     */
+    public function getUrlPartsConverter()
+    {
+        return $this->urlPartsConverter;
     }
 
     /**
@@ -113,10 +128,7 @@ class UrlTemplateResolver
                 return $urlHost;
             }
             if ($compileType === self::COMPILE_TYPE_HOST_WITH_SCHEME) {
-                return $this->buildUrlFromParseUrlParts([
-                    'scheme' => isset($urlData['scheme']) ? $urlData['scheme'] : null,
-                    'host' => $urlHost,
-                ]);
+                return $this->urlPartsConverter->buildUrlHostFromParseUrlParts($urlData);
             }
 
             if ($urlHost) {
@@ -148,7 +160,7 @@ class UrlTemplateResolver
             }
         }
 
-        return $this->buildUrlFromParseUrlParts($urlData);
+        return $this->urlPartsConverter->buildUrlFromParseUrlParts($urlData);
     }
 
     /**
@@ -222,23 +234,5 @@ class UrlTemplateResolver
         $urlData['path'] = $simplifiedPath;
 
         return $urlData;
-    }
-
-    /**
-     * @param array $urlFragments
-     * @return string
-     */
-    protected function buildUrlFromParseUrlParts(array $urlFragments)
-    {
-        return (isset($urlFragments['scheme']) ? $urlFragments['scheme'] . ":" : '') .
-            ((isset($urlFragments['user']) || isset($urlFragments['host'])) ? '//' : '') .
-            (isset($urlFragments['user']) ? $urlFragments['user'] : '') .
-            (isset($urlFragments['pass']) ? ":" . $urlFragments['pass'] : '') .
-            (isset($urlFragments['user']) ? '@' : '') .
-            (isset($urlFragments['host']) ? $urlFragments['host'] : '') .
-            (isset($urlFragments['port']) ? ":" . $urlFragments['port'] : '') .
-            (isset($urlFragments['path']) ? $urlFragments['path'] : '') .
-            (!empty($urlFragments['query']) ? "?" . $urlFragments['query'] : '') .
-            (isset($urlFragments['fragment']) ? "#" . $urlFragments['fragment'] : '');
     }
 }
