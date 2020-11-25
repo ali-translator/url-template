@@ -4,6 +4,7 @@ namespace ALI\UrlTemplate;
 
 use ALI\UrlTemplate\Enums\UrlPartType;
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
+use ALI\UrlTemplate\Exceptions\MissingRequiredUrlParametersException;
 use ALI\UrlTemplate\TextTemplate\UrlPartTextTemplate;
 use ALI\UrlTemplate\UrlTemplateResolver\UrlPartParser;
 use Exception;
@@ -91,13 +92,20 @@ class UrlTemplateResolver
         $decoratedFullParameters = $parsedUrlTemplate->getDecoratedFullParameters();
         $parameterNamesWhichHideOnUrl = $parsedUrlTemplate->getActualHiddenUrlParameters();
 
-        if (in_array($compileType, [self::COMPILE_TYPE_ALL, self::COMPILE_TYPE_HOST, self::COMPILE_TYPE_HOST_WITH_SCHEME])) {
-            $urlHost = $parsedUrlTemplate->getPatternedHost();
+        $urlHost = $parsedUrlTemplate->getPatternedHost();
+        if ($urlHost && in_array($compileType, [self::COMPILE_TYPE_ALL, self::COMPILE_TYPE_HOST, self::COMPILE_TYPE_HOST_WITH_SCHEME])) {
             foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
                 $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, [$parameterNameForRemoving => null]);
             }
             $urlHost = preg_replace('/\.{2,}/', '.', $urlHost);
             $urlHost = str_replace('..', ',', $urlHost);
+
+            // Check host parameters existing
+            $hostTemplateParameters = $this->urlTemplateConfig->getHostUrlParameters();
+            $missingHostParameters = array_diff($hostTemplateParameters, array_keys($decoratedFullParameters));
+            if ($missingHostParameters) {
+                throw new MissingRequiredUrlParametersException('Missing required host url parameters: "' . implode(', ', $missingHostParameters) . '"');
+            }
 
             $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $decoratedFullParameters);
 
@@ -116,16 +124,25 @@ class UrlTemplateResolver
             }
         }
 
-        if ($compileType === self::COMPILE_TYPE_ALL || $compileType === self::COMPILE_TYPE_PATH) {
-            $urlPath = $parsedUrlTemplate->getPatternedPath();
+        $urlPath = $parsedUrlTemplate->getPatternedPath();
+        if ($urlPath && ($compileType === self::COMPILE_TYPE_ALL || $compileType === self::COMPILE_TYPE_PATH)) {
             foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
                 $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, [$parameterNameForRemoving => null]);
             }
+
+            // Check path parameters existing
+            $pathTemplateParameters = $this->urlTemplateConfig->getPathUrlParameters();
+            $missingPathParameters = array_diff($pathTemplateParameters, array_keys($decoratedFullParameters));
+            if ($missingPathParameters) {
+                throw new MissingRequiredUrlParametersException('Missing required path url parameters: "' . implode(', ', $missingPathParameters) . '"');
+            }
+
             $urlPath = preg_replace('/\/{2,}/', '/', $urlPath);
             $urlPath = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlPath, $decoratedFullParameters);
             if ($urlPath) {
                 $urlData['path'] = $urlPath;
             }
+
             if ($compileType === self::COMPILE_TYPE_PATH) {
                 unset($urlData['scheme']);
             }
