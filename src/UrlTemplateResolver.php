@@ -124,15 +124,15 @@ class UrlTemplateResolver
 
             $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, $decoratedFullParameters);
 
+            if ($urlHost) {
+                $urlData['host'] = $urlHost;
+            }
+
             if ($compileType === self::COMPILE_TYPE_HOST) {
                 return $urlHost;
             }
             if ($compileType === self::COMPILE_TYPE_HOST_WITH_SCHEME) {
                 return $this->urlPartsConverter->buildUrlHostFromParseUrlParts($urlData);
-            }
-
-            if ($urlHost) {
-                $urlData['host'] = $urlHost;
             }
         }
 
