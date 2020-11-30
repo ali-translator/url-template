@@ -267,13 +267,18 @@ class UrlTemplateResolverTest extends TestCase
 
         $expectCompiledUrl = '/ssssssss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($expectCompiledUrl);
-        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_PATH);
         self::assertEquals($expectCompiledUrl, $compiledUrl);
 
+        $parsedUrlTemplate->setParameter('country', 'uk');
+        $parsedUrlTemplate->setParameter('city', 'berlin');
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        self::assertEquals('//uk.test.com' . $expectCompiledUrl, $compiledUrl);
+
+        $expectCompiledUrl = '/de/ss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrlTemplate->setParameter('param', 'ss');
         $parsedUrlTemplate->setParameter('language', 'de');
-        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        $expectCompiledUrl = '/de/ss/some-path-prefix/what/?s=1&g=2&h';
+        $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_PATH);
         self::assertEquals($expectCompiledUrl, $compiledUrl);
     }
 

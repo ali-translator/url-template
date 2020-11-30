@@ -108,6 +108,9 @@ class UrlTemplateResolver
         $parameterNamesWhichHideOnUrl = $parsedUrlTemplate->getActualHiddenUrlParameters();
 
         $urlHost = $parsedUrlTemplate->getPatternedHost();
+        if (!$urlHost) {
+            $urlHost = $this->getUrlTemplateConfig()->getHostUrlTemplate();
+        }
         if ($urlHost && in_array($compileType, [self::COMPILE_TYPE_ALL, self::COMPILE_TYPE_HOST, self::COMPILE_TYPE_HOST_WITH_SCHEME])) {
             foreach ($parameterNamesWhichHideOnUrl as $parameterNameForRemoving) {
                 $urlHost = $this->urlTemplateConfig->getTextTemplate()->resolveParameters($urlHost, [$parameterNameForRemoving => null]);
