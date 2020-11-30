@@ -129,6 +129,13 @@ class UrlTemplateResolver
 
             if ($urlHost) {
                 $urlData['host'] = $urlHost;
+                if (!empty($urlData['host'])
+                    && empty($urlData['scheme'])
+                    && $this->getUrlTemplateConfig()->getDefaultUrlSchema()
+                ) {
+                    // Use default schema
+                    $urlData['scheme'] = $this->getUrlTemplateConfig()->getDefaultUrlSchema();
+                }
             }
 
             if ($compileType === self::COMPILE_TYPE_HOST) {

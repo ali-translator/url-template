@@ -273,7 +273,7 @@ class UrlTemplateResolverTest extends TestCase
         $parsedUrlTemplate->setParameter('country', 'uk');
         $parsedUrlTemplate->setParameter('city', 'berlin');
         $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
-        self::assertEquals('//uk.test.com' . $expectCompiledUrl, $compiledUrl);
+        self::assertEquals('https://uk.test.com' . $expectCompiledUrl, $compiledUrl);
 
         $expectCompiledUrl = '/de/ss/some-path-prefix/what/?s=1&g=2&h';
         $parsedUrlTemplate->setParameter('param', 'ss');
@@ -746,5 +746,60 @@ class UrlTemplateResolverTest extends TestCase
         $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
         $excessiveOwnParameters = $parsedUrlTemplate->getExcessiveOwnParameters();
         $this->assertEquals([], $excessiveOwnParameters);
+    }
+
+    /**
+     * @throws InvalidUrlException
+     */
+    public function testTemplateConfigWithSchema()
+    {
+        // With default schema
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.test.com',
+            '/{language}/{city}/',
+            [
+                'country' => '(tr)',
+                'language' => '(en|tr)',
+                'city' => '(istanbul|ankara)',
+            ],
+            [
+                'language' => 'tr',
+                'city' => 'istanbul',
+            ],
+            true
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $expectedCompiledUrl = 'https://tr.test.com/go/spa-v-temnote/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl('/go/spa-v-temnote/');
+        $parsedUrlTemplate->setParameter('country', 'tr');
+        $actualUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        $this->assertEquals($expectedCompiledUrl, $actualUrl);
+
+        // Without default schema
+        $urlTemplateConfig = new UrlTemplateConfig(
+            '{country}.test.com',
+            '/{language}/{city}/',
+            [
+                'country' => '(tr)',
+                'language' => '(en|tr)',
+                'city' => '(istanbul|ankara)',
+            ],
+            [
+                'language' => 'tr',
+                'city' => 'istanbul',
+            ],
+            true,
+            [],
+            null,
+            null
+        );
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        $expectedCompiledUrl = '//tr.test.com/go/spa-v-temnote/';
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl('/go/spa-v-temnote/');
+        $parsedUrlTemplate->setParameter('country', 'tr');
+        $actualUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
+        $this->assertEquals($expectedCompiledUrl, $actualUrl);
     }
 }

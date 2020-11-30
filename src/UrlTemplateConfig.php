@@ -61,7 +61,12 @@ class UrlTemplateConfig
     /**
      * @var TextTemplate
      */
-    private $textTemplate;
+    protected $textTemplate;
+
+    /**
+     * @var string|null
+     */
+    protected $defaultUrlSchema;
 
     /**
      * @param string|null $domainUrlTemplate
@@ -71,6 +76,7 @@ class UrlTemplateConfig
      * @param bool|array $hideDefaultParametersFromUrl
      * @param ParameterDecoratorInterface[] $parametersDecorators
      * @param TextTemplate $textTemplate
+     * @param string|null $defaultUrlSchema
      */
     public function __construct(
         $domainUrlTemplate,
@@ -79,7 +85,8 @@ class UrlTemplateConfig
         array $parametersDefaultValue,
         $hideDefaultParametersFromUrl,
         $parametersDecorators = [],
-        $textTemplate = null
+        $textTemplate = null,
+        $defaultUrlSchema = 'https'
     )
     {
         $this->domainUrlTemplate = $domainUrlTemplate;
@@ -87,6 +94,7 @@ class UrlTemplateConfig
         $this->parametersRequirements = $parametersRequirements;
         $this->defaultParametersValue = $parametersDefaultValue;
         $this->parametersDecorators = $parametersDecorators;
+        $this->defaultUrlSchema = $defaultUrlSchema;
 
         if ($hideDefaultParametersFromUrl === true) {
             $hideDefaultParametersFromUrl = array_keys($parametersDefaultValue);
@@ -331,5 +339,13 @@ class UrlTemplateConfig
         }
 
         return null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDefaultUrlSchema()
+    {
+        return $this->defaultUrlSchema;
     }
 }
