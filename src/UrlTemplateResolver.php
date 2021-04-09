@@ -66,6 +66,12 @@ class UrlTemplateResolver
             $patternedHost = '';
             $hostParametersValue = [];
         } elseif (empty($hostUrlParameters)) {
+            if (
+                ($this->urlTemplateConfig->getHostUrlTemplate() && $urlData['host'])
+                && $this->urlTemplateConfig->getHostUrlTemplate() !== $urlData['host']
+            ) {
+                throw new InvalidUrlException();
+            }
             $patternedHost = $urlData['host'];
             $hostParametersValue = [];
         } else {
@@ -78,6 +84,12 @@ class UrlTemplateResolver
             $patternedUrlPath = '';
             $urlPathParametersValue = [];
         } elseif (empty($pathUrlParameters)) {
+            if (
+                ($this->urlTemplateConfig->getPathUrlTemplate() !== '/' && $urlData['path'])
+                && strpos($urlData['path'],$this->urlTemplateConfig->getPathUrlTemplate()) !== 0
+            ) {
+                throw new InvalidUrlException();
+            }
             $patternedUrlPath = $urlData['path'];
             $urlPathParametersValue = [];
         } else {

@@ -802,4 +802,36 @@ class UrlTemplateResolverTest extends TestCase
         $actualUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
         $this->assertEquals($expectedCompiledUrl, $actualUrl);
     }
+
+    public function testTemplatesWithoutParameters()
+    {
+        $urlTemplateConfig = new UrlTemplateConfig(
+            'www.test.com',
+            '/test/',
+            [], [], false);
+        $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
+
+        // Correct
+        $urlTemplateResolver->parseCompiledUrl('https://www.test.com/test/a');
+
+        // Incorrect host
+        {
+            $exception = null;
+            try {
+                $urlTemplateResolver->parseCompiledUrl('https://test.paris.test.com/test/ssss/');
+            } catch (InvalidUrlException $exception) {
+            }
+            self::assertEquals(get_class($exception), InvalidUrlException::class);
+        }
+
+        // Incorrect path
+        {
+            $exception = null;
+            try {
+                $urlTemplateResolver->parseCompiledUrl('https://www.test.com/ssss/');
+            } catch (InvalidUrlException $exception) {
+            }
+            self::assertEquals(get_class($exception), InvalidUrlException::class);
+        }
+    }
 }

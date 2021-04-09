@@ -90,7 +90,14 @@ class UrlTemplateConfig
     )
     {
         $this->domainUrlTemplate = $domainUrlTemplate;
-        $this->pathUrlTemplate = '/' . trim($pathUrlTemplate, '/') . '/';
+
+        $pathUrlTemplate = trim($pathUrlTemplate, '/');
+        if ($pathUrlTemplate) {
+            $this->pathUrlTemplate = '/' . $pathUrlTemplate . '/';
+        } else {
+            $this->pathUrlTemplate = '/';
+        }
+
         $this->parametersRequirements = $parametersRequirements;
         $this->defaultParametersValue = $parametersDefaultValue;
         $this->parametersDecorators = $parametersDecorators;
