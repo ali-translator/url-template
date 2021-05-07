@@ -149,6 +149,15 @@ $urlTemplateConfig = new UrlTemplateConfig(
                         $countryAlias = $requiredParametersValues['country'] ?? $currentCountryAlias;
                   ...
     ```
+* For creating new `UrlTemplateConfig` by existed:
+```php
+/** @var $urlTemplateConfig ALI\UrlTemplate\UrlTemplateConfig */
+$urlTemplateConfigData = $urlTemplateConfig->generateUrlTemplateConfigData();
+// Change some config data
+$urlTemplateConfigData->setDefaultUrlSchema('https');
+// Create new UrlTemplateConfig
+$newUrlTemplateConfig = $urlTemplateConfigData->generateUrlTemplateConfig();
+```
 
 ### Tests
 In packet exist docker-compose file, with environment for testing.

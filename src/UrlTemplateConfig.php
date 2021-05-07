@@ -4,6 +4,7 @@ namespace ALI\UrlTemplate;
 
 use ALI\UrlTemplate\ParameterDecorators\ParameterDecoratorInterface;
 use ALI\UrlTemplate\TextTemplate\TextTemplate;
+use ALI\UrlTemplate\Units\UrlTemplateConfigData;
 
 /**
  * Class
@@ -111,6 +112,23 @@ class UrlTemplateConfig
         $this->hideDefaultParametersFromUrl = array_combine($hideDefaultParametersFromUrl, $hideDefaultParametersFromUrl);
 
         $this->textTemplate = $textTemplate ?: new TextTemplate();
+    }
+
+    /**
+     * @return UrlTemplateConfigData
+     */
+    public function generateUrlTemplateConfigData()
+    {
+        return new UrlTemplateConfigData(
+            $this->domainUrlTemplate,
+            $this->pathUrlTemplate,
+            $this->parametersRequirements,
+            $this->defaultParametersValue,
+            $this->hideDefaultParametersFromUrl,
+            $this->parametersDecorators,
+            $this->textTemplate,
+            $this->defaultUrlSchema
+        );
     }
 
     /**
