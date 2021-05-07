@@ -86,7 +86,7 @@ $urlTemplateConfig = new UrlTemplateConfig(
     [
         'language' => function ($requiredParameters) {
             switch ($requiredParameters['country']) {
-                case 'tr':
+  case 'tr':
                     return 'tr';
                 break;
                 case 'gb':
@@ -143,11 +143,11 @@ $urlTemplateConfig = new UrlTemplateConfig(
 * If you have an optional parameter that depends on another parameter, and  this another parameter was in another part of the url(for example the optional parameter is in the "path url part", and it depends on the parameter in the "host url part"), then there can be a problem when you need to process relative url, without the host.<br>
   To be able to leave this possibility, you need to pass a value to the function of determining the optional parameter:<br>
     ```php
-                  ...
-                  [
-                    'language' => function ($requiredParametersValues) use ($currentCountryAlias) {
-                        $countryAlias = $requiredParametersValues['country'] ?? $currentCountryAlias;
-                  ...
+    ...
+    [
+      'language' => function ($requiredParametersValues) use ($currentCountryAlias) {
+          $countryAlias = $requiredParametersValues['country'] ?? $currentCountryAlias;
+    ...
     ```
 * For creating new `UrlTemplateConfig` by existed:
     ```php
