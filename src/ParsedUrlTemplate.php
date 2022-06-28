@@ -10,12 +10,12 @@ use Exception;
 class ParsedUrlTemplate
 {
     /**
-     * @var string
+     * @var null|string
      */
     protected $patternedHost;
 
     /**
-     * @var string
+     * @var null|string
      */
     protected $patternedPath;
 
@@ -40,8 +40,8 @@ class ParsedUrlTemplate
     protected $additionalUrlData;
 
     /**
-     * @param string $patternedHost
-     * @param string $patternedPath
+     * @param null|string $patternedHost
+     * @param null|string $patternedPath
      * @param string[] $parameters
      * @param UrlTemplateConfig $urlTemplateConfig
      * @param string[] $additionalUrlData
@@ -67,17 +67,17 @@ class ParsedUrlTemplate
     }
 
     /**
-     * @return string
+     * @return null|string
      */
-    public function getPatternedHost(): string
+    public function getPatternedHost()
     {
         return $this->patternedHost;
     }
 
     /**
-     * @return string
+     * @return null|string
      */
-    public function getPatternedPath(): string
+    public function getPatternedPath()
     {
         return $this->patternedPath;
     }
