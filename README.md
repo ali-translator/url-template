@@ -136,6 +136,18 @@ $urlTemplateConfig = new UrlTemplateConfig(
 
 **For correct decorator works - use array on requirements, with available values, not regular expression.<br>**
 
+### Validate ParsedTemplate object
+```php
+use \ALI\UrlTemplate\UrlTemplateResolver\ParsedUrlTemplateValidator;
+use \ALI\UrlTemplate\ParsedUrlTemplate;
+
+/** @var ParsedUrlTemplate $parsedUrlTemplate */
+
+$urlTemplateValidator = new ParsedUrlTemplateValidator();
+$errors = $urlTemplateValidator->validateParameters($parsedUrlTemplate);
+// $errors : [key -> (string)'error description']
+```
+
 ### Additional features
 * also you may use templates, where in one "url namespace" placed few parameters, as host "{country}-{language}-{currency}.test.com" and path "/{country}-{language}/"
 * If you need only compile "host url" or "path url" ``` $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_HOST) ```

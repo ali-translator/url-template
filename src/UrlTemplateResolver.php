@@ -110,7 +110,6 @@ class UrlTemplateResolver
      * @param ParsedUrlTemplate $parsedUrlTemplate
      * @param string $compileType
      * @return string
-     * @throws Exception
      */
     public function compileUrl($parsedUrlTemplate, $compileType = self::COMPILE_TYPE_ALL)
     {

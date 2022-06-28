@@ -69,7 +69,7 @@ class ParsedUrlTemplate
     /**
      * @return string
      */
-    public function getPatternedHost()
+    public function getPatternedHost(): string
     {
         return $this->patternedHost;
     }
@@ -77,7 +77,7 @@ class ParsedUrlTemplate
     /**
      * @return string
      */
-    public function getPatternedPath()
+    public function getPatternedPath(): string
     {
         return $this->patternedPath;
     }
@@ -85,9 +85,8 @@ class ParsedUrlTemplate
     /**
      * @param string $parameterName
      * @return string|null
-     * @throws Exception
      */
-    public function getParameter($parameterName)
+    public function getParameter(string $parameterName)
     {
         $parameters = $this->getFullParameters();
         if (array_key_exists($parameterName, $parameters)) {
@@ -100,16 +99,15 @@ class ParsedUrlTemplate
     /**
      * @return string[]
      */
-    public function getOwnParameters()
+    public function getOwnParameters(): array
     {
         return $this->parameters;
     }
 
     /**
      * @return array
-     * @throws Exception
      */
-    public function getOwnDefaultParameters()
+    public function getOwnDefaultParameters(): array
     {
         $defaultParameters = $this->compiledDefaultParametersValue;
 
@@ -125,9 +123,8 @@ class ParsedUrlTemplate
 
     /**
      * @return array
-     * @throws Exception
      */
-    public function getExcessiveOwnParameters()
+    public function getExcessiveOwnParameters(): array
     {
         $defaultOwnParameters = $this->getOwnDefaultParameters();
 
@@ -143,18 +140,16 @@ class ParsedUrlTemplate
 
     /**
      * @return string[]
-     * @throws Exception
      */
-    public function getFullParameters()
+    public function getFullParameters(): array
     {
         return $this->parameters + $this->compiledDefaultParametersValue;
     }
 
     /**
      * @return string[]
-     * @throws Exception
      */
-    public function getDecoratedFullParameters()
+    public function getDecoratedFullParameters(): array
     {
         $fullParameters = $this->getFullParameters();
         foreach ($fullParameters as $parameterName => $parameterValue) {
@@ -170,7 +165,7 @@ class ParsedUrlTemplate
     /**
      * @param string $parameterName
      */
-    public function unsetParameter($parameterName)
+    public function unsetParameter(string $parameterName)
     {
         unset($this->parameters[$parameterName]);
     }
