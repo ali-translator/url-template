@@ -2,11 +2,8 @@
 
 namespace ALI\UrlTemplate\Enums;
 
-/**
- * Class
- */
 class UrlPartType
 {
-    const TYPE_HOST = 'host';
-    const TYPE_PATH = 'path';
+    public const TYPE_HOST = 'host';
+    public const TYPE_PATH = 'path';
 }

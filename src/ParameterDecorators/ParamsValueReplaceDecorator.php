@@ -4,12 +4,8 @@ namespace ALI\UrlTemplate\ParameterDecorators;
 
 class ParamsValueReplaceDecorator implements ParameterDecoratorInterface
 {
-    /**
-     * @var array
-     */
-    protected $valuesOnUrlWithReturnValues;
-
-    protected $returnValuesWithUrlValue;
+    protected array $valuesOnUrlWithReturnValues;
+    protected array $returnValuesWithUrlValue;
 
     public function __construct(array $valuesOnUrlWithReturnValues)
     {
@@ -17,21 +13,13 @@ class ParamsValueReplaceDecorator implements ParameterDecoratorInterface
         $this->returnValuesWithUrlValue = array_combine($valuesOnUrlWithReturnValues, array_keys($valuesOnUrlWithReturnValues));
     }
 
-    /**
-     * @param string $decoratedParameterValue
-     * @return string
-     */
-    public function parse($decoratedParameterValue)
+    public function parse(?string $decoratedParameterValue): string
     {
-        return $this->valuesOnUrlWithReturnValues[$decoratedParameterValue] ?? $decoratedParameterValue;
+        return (string)($this->valuesOnUrlWithReturnValues[$decoratedParameterValue] ?? $decoratedParameterValue);
     }
 
-    /**
-     * @param string $clearParameterValue
-     * @return string
-     */
-    public function generate($clearParameterValue)
+    public function generate(?string $clearParameterValue): string
     {
-        return $this->returnValuesWithUrlValue[$clearParameterValue] ?? $clearParameterValue;
+        return (string)($this->returnValuesWithUrlValue[$clearParameterValue] ?? $clearParameterValue);
     }
 }

@@ -6,9 +6,6 @@ use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\ParameterDecorators\WrapperParameterDecorator;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Class
- */
 class UrlTemplateResolverTest extends TestCase
 {
     /**
@@ -233,13 +230,13 @@ class UrlTemplateResolverTest extends TestCase
         $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
         $compiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
-        $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
-        $simplifiedUrlData = $urlTemplateResolver->getSimplifiedUrlData($parsedUrl);
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
+        $simplifiedUrlData = $urlTemplateResolver->getSimplifiedUrlData($parsedUrlTemplate);
         self::assertEquals('/what/', $simplifiedUrlData['path']);
 
         $compiledUrl = 'https://test.pl.berlin.test.com/en/ssssssss/some-path-prefix/what/?s=1&g=2&h';
-        $parsedUrl = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
-        $compileUrl = $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_HOST);
+        $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($compiledUrl);
+        $compileUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate, $urlTemplateResolver::COMPILE_TYPE_HOST);
         self::assertEquals('test.pl.test.com', $compileUrl);
     }
 

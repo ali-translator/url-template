@@ -2,20 +2,10 @@
 
 namespace ALI\UrlTemplate\TextTemplate;
 
-/**
- * Class
- */
 class TextTemplate
 {
-    /**
-     * @var string
-     */
-    private $openTag;
-
-    /**
-     * @var string
-     */
-    private $closeTag;
+    private string $openTag;
+    private string $closeTag;
 
     /**
      * @param string $openTag
@@ -28,10 +18,9 @@ class TextTemplate
     }
 
     /**
-     * @param null|string $text
      * @return string[]
      */
-    public function parseParametersName($text): array
+    public function parseParametersName(?string $text): array
     {
         if (!$text) {
             return [];
@@ -44,12 +33,7 @@ class TextTemplate
         return $parametersName[1];
     }
 
-    /**
-     * @param null|string $text
-     * @param array $parameters
-     * @return string
-     */
-    public function resolveParameters($text, array $parameters): string
+    public function resolveParameters(?string $text, array $parameters): string
     {
         if (!$text) {
             return '';
@@ -63,10 +47,6 @@ class TextTemplate
         return str_replace($keysForReplacing, $parameters, $text);
     }
 
-    /**
-     * @param string $parameterName
-     * @return string
-     */
     public function getParameterKey(string $parameterName): string
     {
         return $this->openTag . $parameterName . $this->closeTag;

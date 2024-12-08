@@ -6,47 +6,30 @@ use ALI\UrlTemplate\Enums\UrlPartType;
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\Helpers\DuplicateParameterResolver;
 use ALI\UrlTemplate\Helpers\OptionalityParametersCombinator;
-use ALI\UrlTemplate\TextTemplate\UrlPartTextTemplate;
 use ALI\UrlTemplate\UrlTemplateConfig;
+use LogicException;
 
-/**
- * Class
- */
 class UrlPartParser
 {
-    /**
-     * @var UrlTemplateConfig
-     */
-    protected $urlTemplateConfig;
+    protected OptionalityParametersCombinator $optionalityParametersCombinator;
+    protected DuplicateParameterResolver $duplicateParameterResolver;
 
-    /**
-     * @var UrlPartTextTemplate
-     */
-    protected $urlPartTextTemplate;
 
-    /**
-     * @var OptionalityParametersCombinator
-     */
-    protected $optionalityParametersCombinator;
-
-    /**
-     * @param UrlTemplateConfig $urlTemplateConfig
-     */
-    public function __construct(UrlTemplateConfig $urlTemplateConfig)
+    public function __construct(DuplicateParameterResolver $duplicateParameterResolver)
     {
-        $this->urlTemplateConfig = $urlTemplateConfig;
-        $this->urlPartTextTemplate = new UrlPartTextTemplate($this->urlTemplateConfig->getTextTemplate());
         $this->optionalityParametersCombinator = new OptionalityParametersCombinator();
+        $this->duplicateParameterResolver = $duplicateParameterResolver;
     }
 
     /**
-     * @param $type
-     * @param $urlPart
-     * @param $parametersNames
-     * @return array
      * @throws InvalidUrlException
      */
-    public function parse($type, $urlPart, $parametersNames)
+    public function parse(
+        string $type,
+        string $urlPart,
+        array $parametersNames,
+        UrlTemplateConfig $urlTemplateConfig
+    ): array
     {
         $patternedUrlPart = null;
         $urlPartParametersValue = [];
@@ -54,18 +37,18 @@ class UrlPartParser
             return [$patternedUrlPart, $urlPartParametersValue];
         }
 
-        $duplicateParameterResolver = new DuplicateParameterResolver();
-
         switch ($type) {
             case UrlPartType::TYPE_HOST:
-                $urlPartTemplate = $this->urlTemplateConfig->getHostUrlTemplate();
+                $urlPartTemplate = $urlTemplateConfig->getHostUrlTemplate();
                 break;
             case UrlPartType::TYPE_PATH:
-                $urlPartTemplate = $this->urlTemplateConfig->getPathUrlTemplate();
+                $urlPartTemplate = $urlTemplateConfig->getPathUrlTemplate();
                 break;
+            default:
+                throw new LogicException("Unsupported url part type '{$type}'.");
         }
 
-        $regularExpression = $this->generateRegularExpression($type, $urlPartTemplate, $duplicateParameterResolver);
+        $regularExpression = $this->generateRegularExpression($type, $urlPartTemplate, $this->duplicateParameterResolver, $urlTemplateConfig);
 
         // search parameters values
         if (!preg_match_all($regularExpression, $urlPart, $matches, PREG_SET_ORDER)) {
@@ -73,7 +56,7 @@ class UrlPartParser
         }
 
         $matches = current($matches);
-        $urlPartParametersValue = $this->bindParametersValues($parametersNames, $matches, $duplicateParameterResolver);
+        $urlPartParametersValue = $this->bindParametersValues($parametersNames, $matches, $this->duplicateParameterResolver, $urlTemplateConfig);
         $patternedUrlPart = preg_replace($regularExpression, $urlPartTemplate, $urlPart, 1);
 
         return [$patternedUrlPart, $urlPartParametersValue];
@@ -82,22 +65,23 @@ class UrlPartParser
     /**
      * @var string[]
      */
-    protected $regularExpressions = [];
+    protected array $regularExpressions = [];
 
-    /**
-     * @param string $type
-     * @param string $urlPartTemplate
-     * @param DuplicateParameterResolver $duplicateParameterResolver
-     * @return string
-     */
-    protected function generateRegularExpression($type, $urlPartTemplate, $duplicateParameterResolver)
+    protected function generateRegularExpression(
+        string $type,
+        string $urlPartTemplate,
+        DuplicateParameterResolver $duplicateParameterResolver,
+        UrlTemplateConfig $urlTemplateConfig
+    ): string
     {
-        if(isset($this->regularExpressions[$urlPartTemplate])){
-            return $this->regularExpressions[$urlPartTemplate];
+        $cacheKey = spl_object_id($urlTemplateConfig) . $type . $urlPartTemplate;
+
+        if (isset($this->regularExpressions[$cacheKey])) {
+            return $this->regularExpressions[$cacheKey];
         }
 
-        $textTemplate = $this->urlTemplateConfig->getTextTemplate();
-        $optionalityParametersNames = $this->urlTemplateConfig->getHideDefaultParametersFromUrl();
+        $textTemplate = $urlTemplateConfig->getTextTemplate();
+        $optionalityParametersNames = $urlTemplateConfig->getHideDefaultParametersFromUrl();
 
         $namespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '.' : '/';
         $quotedNamespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '\.' : '\\/';
@@ -120,7 +104,7 @@ class UrlPartParser
 
                 foreach ($allCombination as $currentCombinationParameters) {
                     if (!$currentCombinationParameters) {
-                        // Combination where all parameters was skipped
+                        // Combination where all parameters were skipped
                         $namespaceCombinationsReqExpressions[] = '';
                         continue;
                     }
@@ -135,7 +119,7 @@ class UrlPartParser
                         }
                     }
 
-                    $parametersForReplacing = $this->generateParametersForReplacing($parametersForReplacing, $duplicateParameterResolver);
+                    $parametersForReplacing = $this->generateParametersForReplacing($parametersForReplacing, $duplicateParameterResolver, $urlTemplateConfig);
                     $namespaceCombinationsReqExpressions[] = $textTemplate->resolveParameters($namespaceUrlPartTemplate, $parametersForReplacing);
                 }
             } else {
@@ -155,27 +139,31 @@ class UrlPartParser
             $allCombinationsReqExpressions[] = $splitNamespaceReqExpression;
         }
 
-        $regularExpression = '' . implode('', $allCombinationsReqExpressions);
+        $regularExpression = implode('', $allCombinationsReqExpressions);
         if ($type === UrlPartType::TYPE_PATH) {
             $regularExpression = '^' . $regularExpression;
         }
-        $this->regularExpressions[$urlPartTemplate] = '/' . $regularExpression . '/';
+        $regularExpression = '/' . $regularExpression . '/';
 
-        return $this->regularExpressions[$urlPartTemplate];
+        $this->regularExpressions[$cacheKey] = $regularExpression;
+
+        return $this->regularExpressions[$cacheKey];
     }
 
     /**
      * @param string[] $parametersNames
-     * @param DuplicateParameterResolver $duplicateParameterResolver
-     * @return array
      */
-    protected function generateParametersForReplacing($parametersNames, $duplicateParameterResolver)
+    protected function generateParametersForReplacing(
+        array $parametersNames,
+        DuplicateParameterResolver $duplicateParameterResolver,
+        UrlTemplateConfig $urlTemplateConfig
+    ): array
     {
         $parametersForReplacing = [];
         foreach ($parametersNames as $parameterName) {
-            $requirement = $this->urlTemplateConfig->getParameterRequirements($parameterName);
+            $requirement = $urlTemplateConfig->getParameterRequirements($parameterName);
             if (!$requirement) {
-                throw new \LogicException('Not found requirements for "' . $parameterName . '" parameter');
+                throw new LogicException('Not found requirements for "' . $parameterName . '" parameter');
             }
 
             $parameterForReplacing = '(?P<' . $duplicateParameterResolver->getParameterNameAlias($parameterName) . '>' . $requirement . ')';
@@ -185,13 +173,12 @@ class UrlPartParser
         return $parametersForReplacing;
     }
 
-    /**
-     * @param array $parametersNames
-     * @param array $matches
-     * @param DuplicateParameterResolver $duplicateParameterResolver
-     * @return array
-     */
-    protected function bindParametersValues($parametersNames, $matches, $duplicateParameterResolver)
+    protected function bindParametersValues(
+        array $parametersNames,
+        array $matches,
+        DuplicateParameterResolver $duplicateParameterResolver,
+        UrlTemplateConfig $urlTemplateConfig
+    ): array
     {
         $urlPartParametersValue = [];
 
@@ -199,7 +186,7 @@ class UrlPartParser
         foreach ($parametersNames as $parameterName) {
             $parameterValue = $duplicateParameterResolver->resolverParameterNameValue($parameterName, $matches);;
             if ($parameterValue) {
-                $parameterDecorator = $this->urlTemplateConfig->getParameterDecorator($parameterName);
+                $parameterDecorator = $urlTemplateConfig->getParameterDecorator($parameterName);
                 if ($parameterDecorator) {
                     $parameterValue = $parameterDecorator->parse($parameterValue);
                 }

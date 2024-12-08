@@ -2,26 +2,12 @@
 
 namespace ALI\UrlTemplate\Helpers;
 
-/**
- * Class
- */
 class DuplicateParameterResolver
 {
-    /**
-     * @var int
-     */
-    protected $incrementKey = 0;
+    protected int $incrementKey = 0;
+    protected array $parametersAliases = [];
 
-    /**
-     * @var array
-     */
-    protected $parametersAliases = [];
-
-    /**
-     * @param $parameterName
-     * @return string
-     */
-    public function getParameterNameAlias($parameterName)
+    public function getParameterNameAlias(string $parameterName): string
     {
         if (!isset($this->parametersAliases[$parameterName])) {
             $this->parametersAliases[$parameterName] = [];
@@ -33,11 +19,9 @@ class DuplicateParameterResolver
     }
 
     /**
-     * @param $parameterName
-     * @param $matchesValues
      * @return mixed|null
      */
-    public function resolverParameterNameValue($parameterName, $matchesValues)
+    public function resolverParameterNameValue(string $parameterName, array $matchesValues)
     {
         if (isset($this->parametersAliases[$parameterName])) {
             $parameterAliases = $this->parametersAliases[$parameterName];

@@ -2,35 +2,18 @@
 
 namespace ALI\UrlTemplate\ParameterDecorators;
 
-/**
- * Class
- */
 class WrapperParameterDecorator implements ParameterDecoratorInterface
 {
-    /**
-     * @var string
-     */
-    protected $prefix;
+    protected string $prefix;
+    protected string $postfix;
 
-    /**
-     * @var string
-     */
-    protected $postfix;
-
-    /**
-     * @param string $prefix
-     * @param string $postfix
-     */
-    public function __construct($prefix = '', $postfix = '')
+    public function __construct(string $prefix = '', string $postfix = '')
     {
         $this->prefix = $prefix;
         $this->postfix = $postfix;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function parse($decoratedParameterValue)
+    public function parse(?string $decoratedParameterValue): string
     {
         $regularExpression = '';
         if ($this->prefix) {
@@ -44,10 +27,7 @@ class WrapperParameterDecorator implements ParameterDecoratorInterface
         return preg_replace('/'.$regularExpression.'/', '$1', $decoratedParameterValue);
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function generate($clearParameterValue)
+    public function generate(?string $clearParameterValue): string
     {
         return $this->prefix . $clearParameterValue . $this->postfix;
     }

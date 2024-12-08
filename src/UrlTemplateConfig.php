@@ -7,24 +7,17 @@ use ALI\UrlTemplate\TextTemplate\TextTemplate;
 use ALI\UrlTemplate\Units\UrlTemplateConfigData;
 use RuntimeException;
 
-/**
- * Class
- */
 class UrlTemplateConfig
 {
     /**
      * Example "{country}.test.com"
-     *
-     * @var null|string
      */
-    protected $domainUrlTemplate;
+    protected ?string $domainUrlTemplate;
 
     /**
      * Example "/prefix/{language}/{city}"
-     *
-     * @var null|string
      */
-    protected $pathUrlTemplate;
+    protected ?string $pathUrlTemplate;
 
     /**
      * Example:
@@ -32,10 +25,8 @@ class UrlTemplateConfig
      *          'country' => '[a-z]{2,3}'
      *          'city' => '-0-9a-z]+'
      *      ]
-     *
-     * @var array
      */
-    protected $parametersRequirements;
+    protected array $parametersRequirements;
 
     /**
      * @example
@@ -45,50 +36,37 @@ class UrlTemplateConfig
      *          'city => 'London',
      *      ]
      * If parameter has no default value - their considered as required.
-     *
-     * @var array
      */
-    protected $defaultParametersValue;
+    protected array $defaultParametersValue = [];
 
     /**
-     * @var bool
+     * @var array<string>|bool
      */
     protected $hideDefaultParametersFromUrl;
 
     /**
      * @var ParameterDecoratorInterface[]
      */
-    protected $parametersDecorators;
+    protected array $parametersDecorators;
+
+    protected TextTemplate $textTemplate;
+
+    protected ?string $defaultUrlSchema;
 
     /**
-     * @var TextTemplate
-     */
-    protected $textTemplate;
-
-    /**
-     * @var string|null
-     */
-    protected $defaultUrlSchema;
-
-    /**
-     * @param string|null $domainUrlTemplate
-     * @param string|null $pathUrlTemplate
-     * @param string[] $parametersRequirements
-     * @param array $parametersDefaultValue
-     * @param bool|array $hideDefaultParametersFromUrl
-     * @param ParameterDecoratorInterface[] $parametersDecorators
-     * @param TextTemplate $textTemplate
-     * @param string|null $defaultUrlSchema
+     * @param array<string, array<string>>|array<string> $parametersRequirements
+     * @param bool|array<string> $hideDefaultParametersFromUrl
+     * @param array<ParameterDecoratorInterface> $parametersDecorators
      */
     public function __construct(
-        $domainUrlTemplate,
-        $pathUrlTemplate,
+        ?string $domainUrlTemplate,
+        ?string $pathUrlTemplate,
         array $parametersRequirements,
         array $parametersDefaultValue,
         $hideDefaultParametersFromUrl,
-        $parametersDecorators = [],
-        $textTemplate = null,
-        $defaultUrlSchema = 'https'
+        array $parametersDecorators = [],
+        ?TextTemplate $textTemplate = null,
+        ?string $defaultUrlSchema = 'https'
     )
     {
         $this->domainUrlTemplate = $domainUrlTemplate;
@@ -115,10 +93,7 @@ class UrlTemplateConfig
         $this->textTemplate = $textTemplate ?: new TextTemplate();
     }
 
-    /**
-     * @return UrlTemplateConfigData
-     */
-    public function generateUrlTemplateConfigData()
+    public function generateUrlTemplateConfigData(): UrlTemplateConfigData
     {
         return new UrlTemplateConfigData(
             $this->domainUrlTemplate,
@@ -135,14 +110,14 @@ class UrlTemplateConfig
     /**
      * @var string[]
      */
-    private $_domainUrlParameters;
+    private array $_domainUrlParameters;
 
     /**
      * @return string[]
      */
-    public function getHostUrlParameters()
+    public function getHostUrlParameters(): array
     {
-        if ($this->_domainUrlParameters === null) {
+        if (!isset($this->_domainUrlParameters)) {
             $this->_domainUrlParameters = $this->textTemplate->parseParametersName($this->domainUrlTemplate);
         }
 
@@ -152,14 +127,14 @@ class UrlTemplateConfig
     /**
      * @var string[]
      */
-    private $_pathUrlParameters;
+    private array $_pathUrlParameters;
 
     /**
      * @return string[]
      */
-    public function getPathUrlParameters()
+    public function getPathUrlParameters(): array
     {
-        if ($this->_pathUrlParameters === null) {
+        if (!isset($this->_pathUrlParameters)) {
             $this->_pathUrlParameters = $this->textTemplate->parseParametersName($this->pathUrlTemplate);
         }
 
@@ -169,40 +144,30 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getAllParameters()
+    public function getAllParameters(): array
     {
         return array_merge($this->getHostUrlParameters(), $this->getPathUrlParameters());
     }
 
-    /**
-     * @param string $parameterName
-     * @return bool
-     */
-    public function isRequiredParameter($parameterName)
+    public function isRequiredParameter(string $parameterName): bool
     {
         return !array_key_exists($parameterName, $this->defaultParametersValue);
     }
 
-    /**
-     * @return string|null
-     */
-    public function getHostUrlTemplate()
+    public function getHostUrlTemplate(): ?string
     {
-        return $this->domainUrlTemplate;
+        return $this->domainUrlTemplate ?? null;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getPathUrlTemplate()
+    public function getPathUrlTemplate(): ?string
     {
-        return $this->pathUrlTemplate;
+        return $this->pathUrlTemplate ?? null;
     }
 
     /**
      * @return string[]
      */
-    public function getHostRequiredParameters()
+    public function getHostRequiredParameters(): array
     {
         return array_diff($this->getHostUrlParameters(), array_keys($this->defaultParametersValue));
     }
@@ -211,7 +176,7 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getHostNotRequiredParameters()
+    public function getHostNotRequiredParameters(): array
     {
         return array_diff($this->getHostUrlParameters(), $this->getHostRequiredParameters());
     }
@@ -219,7 +184,7 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getPathRequiredParameters()
+    public function getPathRequiredParameters(): array
     {
         return array_diff($this->getPathUrlParameters(), array_keys($this->defaultParametersValue));
     }
@@ -227,7 +192,7 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getPathNotRequiredParameters()
+    public function getPathNotRequiredParameters(): array
     {
         return array_diff($this->getPathUrlParameters(), $this->getPathRequiredParameters());
     }
@@ -235,7 +200,7 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getRequiredParameters()
+    public function getRequiredParameters(): array
     {
         return array_diff($this->getAllParameters(), array_keys($this->defaultParametersValue));
     }
@@ -243,7 +208,7 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getNotRequireParameters()
+    public function getNotRequireParameters(): array
     {
         return array_diff($this->getAllParameters(), $this->getRequiredParameters());
     }
@@ -251,16 +216,12 @@ class UrlTemplateConfig
     /**
      * @return string[]
      */
-    public function getParametersRequirements()
+    public function getParametersRequirements(): array
     {
         return $this->parametersRequirements;
     }
 
-    /**
-     * @param string $parameterName
-     * @return string|null
-     */
-    public function getParameterRequirements($parameterName)
+    public function getParameterRequirements(string $parameterName): ?string
     {
         if (!isset($this->parametersRequirements[$parameterName])) {
             return null;
@@ -286,20 +247,12 @@ class UrlTemplateConfig
         return $parameterRequirements;
     }
 
-    /**
-     * @return array
-     */
-    public function getDefaultParametersValue()
+    public function getDefaultParametersValue(): array
     {
         return $this->defaultParametersValue;
     }
 
-    /**
-     * @param array $existedParametersValue
-     * @return array
-     * @throws \Exception
-     */
-    public function getCompiledDefaultParametersValue(array $existedParametersValue)
+    public function getCompiledDefaultParametersValue(array $existedParametersValue): array
     {
         $compiledDefaultParametersValue = [];
         foreach ($this->defaultParametersValue as $parameterName => $parameterValue) {
@@ -310,11 +263,9 @@ class UrlTemplateConfig
     }
 
     /**
-     * @param $parameterName
-     * @param array $existedParametersValue
      * @return mixed
      */
-    public function getCompiledDefaultParameterValueItem($parameterName, array $existedParametersValue)
+    public function getCompiledDefaultParameterValueItem(string $parameterName, array $existedParametersValue)
     {
         if (!isset($this->defaultParametersValue[$parameterName])) {
             throw new RuntimeException('Invalid default param name "' . $parameterName . '"');
@@ -328,36 +279,22 @@ class UrlTemplateConfig
         return $defaultParameterValue;
     }
 
-    /**
-     * @return array
-     */
-    public function getHideDefaultParametersFromUrl()
+    public function getHideDefaultParametersFromUrl(): array
     {
         return $this->hideDefaultParametersFromUrl;
     }
 
-    /**
-     * @param string $parameterName
-     * @return bool
-     */
-    public function isHiddenParameter($parameterName)
+    public function isHiddenParameter(string $parameterName): bool
     {
         return isset($this->hideDefaultParametersFromUrl[$parameterName]);
     }
 
-    /**
-     * @return TextTemplate
-     */
-    public function getTextTemplate()
+    public function getTextTemplate(): TextTemplate
     {
         return $this->textTemplate;
     }
 
-    /**
-     * @param string $parameterName
-     * @return ParameterDecoratorInterface|null
-     */
-    public function getParameterDecorator($parameterName)
+    public function getParameterDecorator(string $parameterName): ?ParameterDecoratorInterface
     {
         if (isset($this->parametersDecorators[$parameterName])) {
             return $this->parametersDecorators[$parameterName];
@@ -366,10 +303,7 @@ class UrlTemplateConfig
         return null;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getDefaultUrlSchema()
+    public function getDefaultUrlSchema(): ?string
     {
         return $this->defaultUrlSchema;
     }
