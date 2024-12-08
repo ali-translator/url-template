@@ -1,6 +1,6 @@
 <?php
 
-namespace ALI\UrlTemplate\Tests\unit\ParameterDecorators;
+namespace ALI\UrlTemplateTests\unit\ParameterDecorators;
 
 use ALI\UrlTemplate\ParameterDecorators\ParamsValueReplaceDecorator;
 use PHPUnit\Framework\TestCase;

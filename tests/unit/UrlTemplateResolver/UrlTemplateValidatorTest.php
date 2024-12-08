@@ -1,6 +1,6 @@
 <?php
 
-namespace ALI\UrlTemplate\Tests\unit\UrlTemplateResolver;
+namespace ALI\UrlTemplateTests\unit\UrlTemplateResolver;
 
 use ALI\UrlTemplate\ParsedUrlTemplate;
 use ALI\UrlTemplate\UrlTemplateConfig;

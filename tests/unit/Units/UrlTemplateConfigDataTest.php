@@ -1,6 +1,6 @@
 <?php
 
-namespace ALI\UrlTemplate\Tests\unit\Units;
+namespace ALI\UrlTemplateTests\unit\Units;
 
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\UrlTemplateConfig;

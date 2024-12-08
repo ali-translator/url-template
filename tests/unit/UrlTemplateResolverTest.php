@@ -1,9 +1,13 @@
 <?php
 
-namespace ALI\UrlTemplate;
+namespace ALI\UrlTemplateTests\unit;
 
 use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\ParameterDecorators\WrapperParameterDecorator;
+use ALI\UrlTemplate\ParsedUrlTemplate;
+use ALI\UrlTemplate\UrlTemplateConfig;
+use ALI\UrlTemplate\UrlTemplateResolver;
+use Exception;
 use PHPUnit\Framework\TestCase;
 
 class UrlTemplateResolverTest extends TestCase
@@ -368,7 +372,7 @@ class UrlTemplateResolverTest extends TestCase
                             return 'en';
                             break;
                         default:
-                            throw new \Exception('Invalid country alias');
+                            throw new Exception('Invalid country alias');
                             break;
                     }
                 },
@@ -421,13 +425,10 @@ class UrlTemplateResolverTest extends TestCase
                     switch ($requiredParameters['country']) {
                         case 'tr':
                             return '-tr';
-                            break;
                         case 'gb':
                             return '-en';
-                            break;
                         default:
-                            throw new \Exception('Invalid country alias');
-                            break;
+                            throw new Exception('Invalid country alias');
                     }
                 },
             ],
@@ -465,13 +466,10 @@ class UrlTemplateResolverTest extends TestCase
                     switch ($requiredParameters['country']) {
                         case 'tr':
                             return '-tr';
-                            break;
                         case 'gb':
                             return '-en';
-                            break;
                         default:
-                            throw new \Exception('Invalid country alias');
-                            break;
+                            throw new Exception('Invalid country alias');
                     }
                 },
             ],
@@ -540,7 +538,7 @@ class UrlTemplateResolverTest extends TestCase
                             return '-en';
                             break;
                         default:
-                            throw new \Exception('Invalid country alias');
+                            throw new Exception('Invalid country alias');
                             break;
                     }
                 },

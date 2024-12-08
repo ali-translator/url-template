@@ -140,8 +140,15 @@ class UrlPartParser
         }
 
         $regularExpression = implode('', $allCombinationsReqExpressions);
-        if ($type === UrlPartType::TYPE_PATH) {
-            $regularExpression = '^' . $regularExpression;
+        switch ($type){
+            case UrlPartType::TYPE_PATH:
+                $regularExpression = '^' . $regularExpression;
+                break;
+            case UrlPartType::TYPE_HOST:
+                if (!$urlTemplateConfig->isAllowedSubdomains()) {
+                    $regularExpression = '^' . $regularExpression;
+                }
+                break;
         }
         $regularExpression = '/' . $regularExpression . '/';
 

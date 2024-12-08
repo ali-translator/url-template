@@ -48,10 +48,9 @@ class UrlTemplateConfig
      * @var ParameterDecoratorInterface[]
      */
     protected array $parametersDecorators;
-
     protected TextTemplate $textTemplate;
-
     protected ?string $defaultUrlSchema;
+    protected bool $isAllowedSubdomains = true;
 
     /**
      * @param array<string, array<string>>|array<string> $parametersRequirements
@@ -105,6 +104,16 @@ class UrlTemplateConfig
             $this->textTemplate,
             $this->defaultUrlSchema
         );
+    }
+
+    public function isAllowedSubdomains(): bool
+    {
+        return $this->isAllowedSubdomains;
+    }
+
+    public function setIsAllowedSubdomains(bool $isAllowedSubdomains): void
+    {
+        $this->isAllowedSubdomains = $isAllowedSubdomains;
     }
 
     /**

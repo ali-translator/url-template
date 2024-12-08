@@ -1,6 +1,6 @@
 <?php
 
-namespace ALI\UrlTemplate\Tests\unit;
+namespace ALI\UrlTemplateTests\unit\UrlTemplateResolver;
 
 use ALI\UrlTemplate\ParameterDecorators\WrapperParameterDecorator;
 use ALI\UrlTemplate\UrlTemplateConfig;
@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 class UrlTemplateResolver_WithDecorators_Test extends TestCase
 {
     /**
-     * ./vendor/bin/phpunit --filter testPath ./tests/unit/UrlTemplateResolver_WithDecorators_Test.php -vvv
+     * ./vendor/bin/phpunit --filter testPath ./tests/unit/UrlTemplateResolver/UrlTemplateResolver_WithDecorators_Test.php -vvv
      */
     public function testPath()
     {

@@ -1,10 +1,9 @@
 # Url Template
 
-Helping on work with url by their "base" template. <br>
-For example, base structure of you project url was _"gb.example.com/en/london/"_.
-In this example you template url has next parameters: "country","language" and "city".<br>
-Lets create for this example temple: "{country}.example.com/{language}/{city}"<br>
-
+Helps work with URLs using their "base" template. <br>
+For example, the base structure of your project URL is _"gb.example.com/en/london/"_.
+In this example, your template URL has the following parameters: "country," "language," and "city." <br>
+Let's create a template for this example: "{country}.example.com/{language}/{city}" <br>
 
 ## Installation
 
@@ -21,7 +20,7 @@ use ALI\UrlTemplate\UrlTemplateResolver;
 $urlTemplateConfig = new UrlTemplateConfig(
     '{country}.example.com',
     '{language}/{city}/',
-    // Regular expressions that match the parameters  
+    // Regular expressions matching the parameters
     [
         'country' => ['uk','ua','pl'],
         'language' => '[a-z]{2}', // be careful with some free regular expressions
@@ -32,18 +31,19 @@ $urlTemplateConfig = new UrlTemplateConfig(
         'city' => 'berlin',
         'language' => 'en',
     ],
-    // hide defaults parameters from url ?
+    // "Hide default URL parameters?".
+    // Can be an array if you want to hide only some parameters.
     true
 );
 $urlTemplateResolver = new UrlTemplateResolver($urlTemplateConfig);
 
 $url = 'https://gb.example.com/de/london/';
 
-// Parse exist url
+// Parse existing URL
 $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
 var_dump($parsedUrlTemplate->getFullParameters());
 
-// Change some parameter on existed url
+// Change some parameter on existing URL
 $parsedUrlTemplate->setParameter('country','pl');
 $urlWithAnotherCountry = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
 var_dump($urlWithAnotherCountry);
@@ -52,7 +52,7 @@ var_dump($urlWithAnotherCountry);
 $simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrlTemplate);
 var_dump($simplifiedUrl); // -> "https://example.com"
 
-// Generate full url from simplified url(which application return)
+// Generate full url from simplified url(which application returns)
 $parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://example.com/some-category/item?sale=1',[
     'country' => 'uk',
     'city' => 'london',
@@ -61,8 +61,8 @@ $parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://ex
 $compiledUrl = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
 var_dump($compiledUrl); // -> "https://uk.example.com/london/some-category/item?sale=1"
 
-// As you may see, in url was skipped default language value "en"
-// If you want their in url, you must set "false" to last parameter "isHideDefaultParameters" on constructor of UrlTemplateConfig 
+// As you may see, the default language value "en" is omitted in the URL.
+// If you want it included in the URL, you must set "false" for the last parameter "isHideDefaultParameters" in the constructor of `UrlTemplateConfig`. 
 ```
 
 **Warning**: be careful with some free regular expressions, as for language '[a-z]{2}', will be better '(en|de|ua)'
@@ -85,17 +85,10 @@ $urlTemplateConfig = new UrlTemplateConfig(
     ],
     [
         'language' => function ($requiredParameters) {
-            switch ($requiredParameters['country']) {
-  case 'tr':
-                    return 'tr';
-                break;
-                case 'gb':
-                    return 'en';
-                break;
-                default:
-                    throw new Exception('Invalid country alias');
-                break;
-            }
+            $languagesByCountries = ['tr'=>'tr','gb'=>'en'];
+            
+            return $languagesByCountries[$requiredParameters['country']] ?? 
+                throw new Exception('Invalid country alias');
         },
     ],
     true
@@ -103,15 +96,16 @@ $urlTemplateConfig = new UrlTemplateConfig(
 
 ``` 
 
-### Parameter decorators
-Sometimes you need some decoration for you parameters in url.<br>
-For example, if you want next path template to be "/{country}-{language}/", and you decide to hide default language.<br> 
-In this case, without decorators, you get the following compiled url :"/country-/"<br>
-Excessive character "-" looks bad.<br>
-You can use Decorators to solve this problem. <br>
-Decorator - class which implement "ParameterDecoratorInterface".<br>
+### Parameter Decorators
+Sometimes you need to apply decorations to your parameters in a URL.<br>
+For example, if you want the following path template to be "/{country}-{language}/" and decide to hide the default language.<br>
+In this case, without decorators, you would get the following compiled URL: "/country-/".<br>
+The excessive character "-" looks unappealing.<br>
+You can use decorators to solve this problem.<br>
+A decorator is a class that implements the `ParameterDecoratorInterface`.<br>
 
 Example of use:
+
 ```php
 use ALI\UrlTemplate\ParameterDecorators\WrapperParameterDecorator;
 use ALI\UrlTemplate\UrlTemplateConfig;
@@ -134,7 +128,7 @@ $urlTemplateConfig = new UrlTemplateConfig(
 );
 ```
 
-**For correct decorator works - use array on requirements, with available values, not regular expression.<br>**
+**For the decorator to work correctly, use an array of requirements with available values, instead of a regular expression.<br>**
 
 ### Validate ParsedTemplate object
 ```php
@@ -149,11 +143,13 @@ $errors = $urlTemplateValidator->validateParameters($parsedUrlTemplate);
 ```
 
 ### Additional features
-* also you may use templates, where in one "url namespace" placed few parameters, as host "{country}-{language}-{currency}.test.com" and path "/{country}-{language}/"
-* If you need only compile "host url" or "path url" ``` $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_HOST) ```
-* If you need skip from url only some of default parameters - you may set array with parameters name for parameter `$hideDefaultParametersFromUrl` of `UrlTemplateConfig` class
-* If you have an optional parameter that depends on another parameter, and  this another parameter was in another part of the url(for example the optional parameter is in the "path url part", and it depends on the parameter in the "host url part"), then there can be a problem when you need to process relative url, without the host.<br>
-  To be able to leave this possibility, you need to pass a value to the function of determining the optional parameter:<br>
+* You can use templates where multiple parameters are placed in one "URL namespace," such as the host "{country}-{language}-{currency}.test.com" and the path "/{country}-{language}/".
+  * If you need to compile only the "host URL" or "path URL," you can use: 
+  ```php
+  $urlTemplateResolver->compileUrl($parsedUrl, $urlTemplateResolver::COMPILE_TYPE_HOST);
+  ```
+* If you need to skip only some default parameters in the URL, you can pass an array of parameter names to the $hideDefaultParametersFromUrl parameter of the UrlTemplateConfig class.
+* If you have an optional parameter that depends on another parameter, and this other parameter is in a different part of the URL (e.g., the optional parameter is in the "path URL part" and depends on a parameter in the "host URL part"), there may be an issue when processing a relative URL without the host.<br> To handle this scenario, pass a value to the function that determines the optional parameter:<br>
     ```php
     ...
     [
@@ -161,18 +157,25 @@ $errors = $urlTemplateValidator->validateParameters($parsedUrlTemplate);
           $countryAlias = $requiredParametersValues['country'] ?? $currentCountryAlias;
     ...
     ```
-* For creating new `UrlTemplateConfig` by existed:
+* To create a new `UrlTemplateConfig` based on an existing one:
     ```php
     /** @var $urlTemplateConfig ALI\UrlTemplate\UrlTemplateConfig */
     $urlTemplateConfigData = $urlTemplateConfig->generateUrlTemplateConfigData();
-    // Change some config data
+    // Modify some config data
     $urlTemplateConfigData->setDefaultUrlSchema('https');
-    // Create new UrlTemplateConfig
+    // Create a new UrlTemplateConfig
     $newUrlTemplateConfig = $urlTemplateConfigData->generateUrlTemplateConfig();
     ```
+* By default, the system allows the use of all subdomains for a given domain template.  
+  For example, if we have a template `{city}.test.com`, it will correctly handle the domain `www.lviv.test.com`.  
+  However, if we need the system to restrict handling of subdomains, we can specify in `UrlTemplateConfig` that subdomains should not be supported:
+  ```php
+  $urlTemplateConfig->setIsAllowedSubdomains(false);
+  ```
+
 
 ### Tests
-In packet exist docker-compose file, with environment for testing.
+Included in the package is a docker-compose file, with an environment for testing.
 ```bash
 docker-compose up -d
 docker-compose exec php bash
