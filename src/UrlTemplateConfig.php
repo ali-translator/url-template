@@ -2,10 +2,10 @@
 
 namespace ALI\UrlTemplate;
 
+use ALI\UrlTemplate\Exceptions\InvalidDefaultParamNameException;
 use ALI\UrlTemplate\ParameterDecorators\ParameterDecoratorInterface;
 use ALI\UrlTemplate\TextTemplate\TextTemplate;
 use ALI\UrlTemplate\Units\UrlTemplateConfigData;
-use RuntimeException;
 
 class UrlTemplateConfig
 {
@@ -273,11 +273,12 @@ class UrlTemplateConfig
 
     /**
      * @return mixed
+     * @throws InvalidDefaultParamNameException
      */
     public function getCompiledDefaultParameterValueItem(string $parameterName, array $existedParametersValue)
     {
         if (!isset($this->defaultParametersValue[$parameterName])) {
-            throw new RuntimeException('Invalid default param name "' . $parameterName . '"');
+            throw new InvalidDefaultParamNameException('Invalid default param name "' . $parameterName . '"');
         }
 
         $defaultParameterValue = $this->defaultParametersValue[$parameterName];

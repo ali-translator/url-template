@@ -2,11 +2,8 @@
 
 namespace ALI\UrlTemplate;
 
-use Exception;
+use ALI\UrlTemplate\Exceptions\InvalidDefaultParamNameException;
 
-/**
- * Class
- */
 class ParsedUrlTemplate
 {
     /**
@@ -40,15 +37,12 @@ class ParsedUrlTemplate
     protected $additionalUrlData;
 
     /**
-     * @param null|string $patternedHost
-     * @param null|string $patternedPath
      * @param string[] $parameters
-     * @param UrlTemplateConfig $urlTemplateConfig
      * @param string[] $additionalUrlData
      */
     public function __construct(
-        $patternedHost,
-        $patternedPath,
+        ?string $patternedHost,
+        ?string $patternedPath,
         array $parameters,
         UrlTemplateConfig $urlTemplateConfig,
         array $additionalUrlData = []
@@ -204,9 +198,9 @@ class ParsedUrlTemplate
     }
 
     /**
-     * @throws Exception
+     * @throws InvalidDefaultParamNameException
      */
-    public function getActualHiddenUrlParameters()
+    public function getActualHiddenUrlParameters(): array
     {
         $parameterNamesWhichHideOnUrl = [];
         foreach ($this->urlTemplateConfig->getHideDefaultParametersFromUrl() as $hiddenParameterName) {

@@ -45,7 +45,7 @@ class UrlPartParser
                 $urlPartTemplate = $urlTemplateConfig->getPathUrlTemplate();
                 break;
             default:
-                throw new LogicException("Unsupported url part type '{$type}'.");
+                throw new InvalidUrlException("Unsupported url part type '{$type}'.");
         }
 
         $regularExpression = $this->generateRegularExpression($type, $urlPartTemplate, $this->duplicateParameterResolver, $urlTemplateConfig);
@@ -170,7 +170,7 @@ class UrlPartParser
         foreach ($parametersNames as $parameterName) {
             $requirement = $urlTemplateConfig->getParameterRequirements($parameterName);
             if (!$requirement) {
-                throw new LogicException('Not found requirements for "' . $parameterName . '" parameter');
+                throw new InvalidUrlException('Not found requirements for "' . $parameterName . '" parameter');
             }
 
             $parameterForReplacing = '(?P<' . $duplicateParameterResolver->getParameterNameAlias($parameterName) . '>' . $requirement . ')';

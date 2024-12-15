@@ -28,7 +28,7 @@ class ParsedUrlTemplateBySimplifiedGenerator
         array $urlData,
         UrlTemplateConfig $urlTemplateConfig,
         UrlPartTextTemplate $urlPartTextTemplate
-    ): string
+    ): ?string
     {
         $patternedHost = $urlData['host'] ?? null;
         if ($patternedHost) {

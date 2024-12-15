@@ -2,12 +2,7 @@
 
 namespace ALI\UrlTemplate\Exceptions;
 
-use RuntimeException;
-
-/**
- * Class
- */
-class MissingRequiredUrlParametersException extends RuntimeException
+class MissingRequiredUrlParametersException extends InvalidUrlException
 {
 
 }
