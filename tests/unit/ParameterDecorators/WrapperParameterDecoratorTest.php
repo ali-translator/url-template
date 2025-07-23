@@ -5,9 +5,6 @@ namespace ALI\UrlTemplateTests\unit\ParameterDecorators;
 use ALI\UrlTemplate\ParameterDecorators\WrapperParameterDecorator;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Class
- */
 class WrapperParameterDecoratorTest extends TestCase
 {
     public function testDecoratorWithPrefixAndPostfix()

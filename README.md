@@ -1,4 +1,4 @@
-# Url Template
+# URL Template
 
 Helps work with URLs using their "base" template. <br>
 For example, the base structure of your project URL is _"gb.example.com/en/london/"_.
@@ -12,7 +12,7 @@ $ composer require ali-translator/url-template
 ```
 
 
-## Code examle:
+## Code example:
 ```php
 use ALI\UrlTemplate\UrlTemplateConfig;
 use ALI\UrlTemplate\UrlTemplateResolver;
@@ -22,9 +22,9 @@ $urlTemplateConfig = new UrlTemplateConfig(
     '{language}/{city}/',
     // Regular expressions matching the parameters
     [
-        'country' => ['uk','ua','pl'],
+        'country' => ['uk', 'ua', 'pl'],
         'language' => '[a-z]{2}', // be careful with some free regular expressions
-        'city' => ['kiev','berlin','paris','london'],
+        'city' => ['kiev', 'berlin', 'paris', 'london'],
     ],
     // If you have some default parameters that may be empty in url, set them here
     [
@@ -44,16 +44,16 @@ $parsedUrlTemplate = $urlTemplateResolver->parseCompiledUrl($url);
 var_dump($parsedUrlTemplate->getFullParameters());
 
 // Change some parameter on existing URL
-$parsedUrlTemplate->setParameter('country','pl');
+$parsedUrlTemplate->setParameter('country', 'pl');
 $urlWithAnotherCountry = $urlTemplateResolver->compileUrl($parsedUrlTemplate);
 var_dump($urlWithAnotherCountry);
 
-// Get clear url(without template parameters) for application routing
+// Get clear URL (without template parameters) for application routing
 $simplifiedUrl = $urlTemplateResolver->getSimplifiedUrl($parsedUrlTemplate);
 var_dump($simplifiedUrl); // -> "https://example.com"
 
-// Generate full url from simplified url(which application returns)
-$parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://example.com/some-category/item?sale=1',[
+// Generate full URL from simplified URL (which application returns)
+$parsedUrlTemplate = $urlTemplateResolver->generateParsedUrlTemplate('https://example.com/some-category/item?sale=1', [
     'country' => 'uk',
     'city' => 'london',
      // 'language' => 'en', // Default values may be skipped
@@ -65,11 +65,11 @@ var_dump($compiledUrl); // -> "https://uk.example.com/london/some-category/item?
 // If you want it included in the URL, you must set "false" for the last parameter "isHideDefaultParameters" in the constructor of `UrlTemplateConfig`. 
 ```
 
-**Warning**: be careful with some free regular expressions, as for language '[a-z]{2}', will be better '(en|de|ua)'
+**Warning**: Be careful with free-form regular expressions. For language parameters, '[a-z]{2}' is less safe than using an explicit list like '(en|de|ua)'.
 
-#### Optionality default values
-You may set optionality default value of parameter. For this you must set callable argument for default value.<br>
-**You optionality parameter must be depending only from required argument.**<br>
+#### Optional Default Values
+You can set optional default values for parameters by providing a callable argument as the default value.<br>
+**Your optional parameter must depend only on required arguments.**<br>
 
 Example of use:<br>
 
@@ -80,12 +80,12 @@ $urlTemplateConfig = new UrlTemplateConfig(
     '{country}.test.com',
     '/{language}/',
     [
-        'country' => ['tr','gb'],
-        'language' => ['en','tr','de'],
+        'country' => ['tr', 'gb'],
+        'language' => ['en', 'tr', 'de'],
     ],
     [
         'language' => function ($requiredParameters) {
-            $languagesByCountries = ['tr'=>'tr','gb'=>'en'];
+            $languagesByCountries = ['tr'=>'tr', 'gb'=>'en'];
             
             return $languagesByCountries[$requiredParameters['country']] ?? 
                 throw new Exception('Invalid country alias');
@@ -93,7 +93,6 @@ $urlTemplateConfig = new UrlTemplateConfig(
     ],
     true
 );
-
 ``` 
 
 ### Parameter Decorators
@@ -130,7 +129,7 @@ $urlTemplateConfig = new UrlTemplateConfig(
 
 **For the decorator to work correctly, use an array of requirements with available values, instead of a regular expression.<br>**
 
-### Validate ParsedTemplate object
+### Validate ParsedTemplate Object
 ```php
 use \ALI\UrlTemplate\UrlTemplateResolver\ParsedUrlTemplateValidator;
 use \ALI\UrlTemplate\ParsedUrlTemplate;
@@ -142,7 +141,7 @@ $errors = $urlTemplateValidator->validateParameters($parsedUrlTemplate);
 // $errors : [key -> (string)'error description']
 ```
 
-### Additional features
+### Additional Features
 * You can use templates where multiple parameters are placed in one "URL namespace," such as the host "{country}-{language}-{currency}.test.com" and the path "/{country}-{language}/".
   * If you need to compile only the "host URL" or "path URL," you can use: 
   ```php
@@ -181,4 +180,5 @@ docker-compose up -d
 docker-compose exec php bash
 composer install
 ./vendor/bin/phpunit
-``` 
+./vendor/bin/phpstan analyse src tests
+```

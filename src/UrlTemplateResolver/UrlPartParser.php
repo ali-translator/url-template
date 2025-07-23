@@ -7,7 +7,6 @@ use ALI\UrlTemplate\Exceptions\InvalidUrlException;
 use ALI\UrlTemplate\Helpers\DuplicateParameterResolver;
 use ALI\UrlTemplate\Helpers\OptionalityParametersCombinator;
 use ALI\UrlTemplate\UrlTemplateConfig;
-use LogicException;
 
 class UrlPartParser
 {
@@ -85,7 +84,6 @@ class UrlPartParser
 
         $namespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '.' : '/';
         $quotedNamespaceDelimiter = $type === UrlPartType::TYPE_HOST ? '\.' : '\\/';
-
 
         $urlPartTemplateNamespaceParts = explode($namespaceDelimiter, $urlPartTemplate);
         $urlPartTemplateNamespaceParts = array_filter($urlPartTemplateNamespaceParts);

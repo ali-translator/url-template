@@ -6,35 +6,25 @@ use ALI\UrlTemplate\Exceptions\InvalidDefaultParamNameException;
 
 class ParsedUrlTemplate
 {
-    /**
-     * @var null|string
-     */
-    protected $patternedHost;
-
-    /**
-     * @var null|string
-     */
-    protected $patternedPath;
+    protected ?string $patternedHost;
+    protected ?string $patternedPath;
 
     /**
      * @var string[]
      */
-    protected $parameters;
-
-    /**
-     * @var static[]
-     */
-    protected $compiledDefaultParametersValue;
-
-    /**
-     * @var UrlTemplateConfig
-     */
-    protected $urlTemplateConfig;
+    protected array $parameters;
 
     /**
      * @var string[]
      */
-    protected $additionalUrlData;
+    protected array $compiledDefaultParametersValue;
+
+    protected UrlTemplateConfig $urlTemplateConfig;
+
+    /**
+     * @var string[]
+     */
+    protected array $additionalUrlData;
 
     /**
      * @param string[] $parameters
@@ -60,27 +50,17 @@ class ParsedUrlTemplate
         $this->additionalUrlData = $additionalUrlData;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getPatternedHost()
+    public function getPatternedHost(): ?string
     {
         return $this->patternedHost;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getPatternedPath()
+    public function getPatternedPath(): ?string
     {
         return $this->patternedPath;
     }
 
-    /**
-     * @param string $parameterName
-     * @return string|null
-     */
-    public function getParameter(string $parameterName)
+    public function getParameter(string $parameterName): ?string
     {
         $parameters = $this->getFullParameters();
         if (array_key_exists($parameterName, $parameters)) {
@@ -98,38 +78,25 @@ class ParsedUrlTemplate
         return $this->parameters;
     }
 
-    /**
-     * @return array
-     */
     public function getOwnDefaultParameters(): array
     {
         $defaultParameters = $this->compiledDefaultParametersValue;
 
-        $defaultOwnParameters = [];
-        foreach ($this->parameters as $parameterName => $ownParameterValue) {
-            if (isset($defaultParameters[$parameterName]) && $defaultParameters[$parameterName] === $ownParameterValue) {
-                $defaultOwnParameters[$parameterName] = $ownParameterValue;
-            }
-        }
-
-        return $defaultOwnParameters;
+        return array_filter(
+            $this->parameters,
+            fn($ownParameterValue, $parameterName) =>
+                isset($defaultParameters[$parameterName]) && $defaultParameters[$parameterName] === $ownParameterValue,
+            ARRAY_FILTER_USE_BOTH
+        );
     }
 
-    /**
-     * @return array
-     */
     public function getExcessiveOwnParameters(): array
     {
-        $defaultOwnParameters = $this->getOwnDefaultParameters();
-
-        $excessiveOwnParameters = [];
-        foreach ($defaultOwnParameters as $parameterName => $parameterValue) {
-            if ($this->urlTemplateConfig->isHiddenParameter($parameterName)) {
-                $excessiveOwnParameters[$parameterName] = $parameterValue;
-            }
-        }
-
-        return $excessiveOwnParameters;
+        return array_filter(
+            $this->getOwnDefaultParameters(),
+            fn($parameterName) => $this->urlTemplateConfig->isHiddenParameter($parameterName),
+            ARRAY_FILTER_USE_KEY
+        );
     }
 
     /**
@@ -156,19 +123,12 @@ class ParsedUrlTemplate
         return $fullParameters;
     }
 
-    /**
-     * @param string $parameterName
-     */
-    public function unsetParameter(string $parameterName)
+    public function unsetParameter(string $parameterName): void
     {
         unset($this->parameters[$parameterName]);
     }
 
-    /**
-     * @param string $parameterName
-     * @param string $parameterValue
-     */
-    public function setParameter($parameterName, $parameterValue)
+    public function setParameter(string $parameterName, string $parameterValue): void
     {
         $this->parameters[$parameterName] = $parameterValue;
     }
@@ -176,15 +136,12 @@ class ParsedUrlTemplate
     /**
      * @param string[] $parameters
      */
-    public function setParameters($parameters)
+    public function setParameters(array $parameters): void
     {
         $this->parameters = $parameters;
     }
 
-    /**
-     * @return UrlTemplateConfig
-     */
-    public function getUrlTemplateConfig()
+    public function getUrlTemplateConfig(): UrlTemplateConfig
     {
         return $this->urlTemplateConfig;
     }
@@ -192,12 +149,13 @@ class ParsedUrlTemplate
     /**
      * @return string[]
      */
-    public function getAdditionalUrlData()
+    public function getAdditionalUrlData(): array
     {
         return $this->additionalUrlData;
     }
 
     /**
+     * @return string[]
      * @throws InvalidDefaultParamNameException
      */
     public function getActualHiddenUrlParameters(): array

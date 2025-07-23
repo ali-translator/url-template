@@ -21,7 +21,7 @@
         "source": "https://github.com/ali-translator/url-template"
     },
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.4 <8.5"
     },
     "autoload": {
         "psr-4": {
@@ -34,7 +34,8 @@
         }
     },
     "require-dev": {
-      "symfony/var-dumper": "^5.0",
-        "phpunit/phpunit": "^9.0"
+        "symfony/var-dumper": "^5.0",
+        "phpunit/phpunit": "^9.0",
+        "phpstan/phpstan": "^2.1"
     }
 }

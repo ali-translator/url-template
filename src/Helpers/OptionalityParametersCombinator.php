@@ -2,9 +2,6 @@
 
 namespace ALI\UrlTemplate\Helpers;
 
-/**
- * Class
- */
 class OptionalityParametersCombinator
 {
     /**
@@ -12,7 +9,7 @@ class OptionalityParametersCombinator
      * @param string[] $optionalityParameters
      * @return array
      */
-    public function getAllParametersCombination($parameters, $optionalityParameters)
+    public function getAllParametersCombination(array $parameters, array $optionalityParameters): array
     {
         $indexedOptionalityParameters = array_combine($optionalityParameters, $optionalityParameters);
 
@@ -41,11 +38,7 @@ class OptionalityParametersCombinator
         return $allParametersCombination;
     }
 
-    /**
-     * @param $binaryMask
-     * @return array
-     */
-    private function getPossibleBinaryVariants($binaryMask)
+    private function getPossibleBinaryVariants(string $binaryMask): array
     {
         $lengths = strlen($binaryMask);
         $maxValueBinary = str_repeat(1, $lengths);
@@ -67,7 +60,7 @@ class OptionalityParametersCombinator
      * @param string[] $indexedOptionalityParameters
      * @return string
      */
-    private function getParametersOptionalityBinaryMask($parameters, $indexedOptionalityParameters)
+    private function getParametersOptionalityBinaryMask(array $parameters, array $indexedOptionalityParameters): string
     {
         $maskArray = '';
         foreach ($parameters as $parameterName) {
@@ -77,12 +70,7 @@ class OptionalityParametersCombinator
         return $maskArray;
     }
 
-    /**
-     * @param $parameters
-     * @param array $indexedOptionalityParameters
-     * @return bool
-     */
-    private function isAllParametersWasRequired($parameters, array $indexedOptionalityParameters)
+    private function isAllParametersWasRequired(array $parameters, array $indexedOptionalityParameters): bool
     {
         foreach ($parameters as $parameterName) {
             if (isset($indexedOptionalityParameters[$parameterName])) {

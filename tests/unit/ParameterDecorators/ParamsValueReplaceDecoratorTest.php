@@ -5,9 +5,6 @@ namespace ALI\UrlTemplateTests\unit\ParameterDecorators;
 use ALI\UrlTemplate\ParameterDecorators\ParamsValueReplaceDecorator;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Class
- */
 class ParamsValueReplaceDecoratorTest extends TestCase
 {
     public function test()

@@ -24,7 +24,7 @@ class ParsedUrlTemplateToSimplifiedUrlDataConverter
     {
         $patternedTemplateHost = $parsedUrlTemplate->getUrlTemplateConfig()->getHostUrlTemplate();
         $patternedHost = $parsedUrlTemplate->getPatternedHost();
-        $simplifiedHost = str_replace($patternedTemplateHost, null, $patternedHost);
+        $simplifiedHost = str_replace($patternedTemplateHost, '', $patternedHost);
         if (!$simplifiedHost || $simplifiedHost[0] !== '.') {
             $simplifiedHost = '.' . $simplifiedHost;
         }
@@ -36,7 +36,7 @@ class ParsedUrlTemplateToSimplifiedUrlDataConverter
     {
         $patternedTemplatePath = $parsedUrlTemplate->getUrlTemplateConfig()->getPathUrlTemplate();
         $patternedPath = $parsedUrlTemplate->getPatternedPath();
-        $simplifiedPath = str_replace($patternedTemplatePath, null, $patternedPath);
+        $simplifiedPath = str_replace($patternedTemplatePath, '', $patternedPath);
         if (!$simplifiedPath || $simplifiedPath[0] !== '/') {
             $simplifiedPath = '/' . $simplifiedPath;
         }

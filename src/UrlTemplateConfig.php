@@ -35,7 +35,7 @@ class UrlTemplateConfig
      *          'language' => 'en',
      *          'city => 'London',
      *      ]
-     * If parameter has no default value - their considered as required.
+     * If a parameter does not have a default value, it is considered required.
      */
     protected array $defaultParametersValue = [];
 
@@ -70,7 +70,7 @@ class UrlTemplateConfig
     {
         $this->domainUrlTemplate = $domainUrlTemplate;
 
-        $pathUrlTemplate = trim($pathUrlTemplate, '/');
+        $pathUrlTemplate = trim($pathUrlTemplate ?? '', '/');
         if ($pathUrlTemplate) {
             $this->pathUrlTemplate = '/' . $pathUrlTemplate . '/';
         } else {
@@ -180,7 +180,6 @@ class UrlTemplateConfig
     {
         return array_diff($this->getHostUrlParameters(), array_keys($this->defaultParametersValue));
     }
-
 
     /**
      * @return string[]

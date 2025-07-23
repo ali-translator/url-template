@@ -2,16 +2,13 @@
 
 namespace ALI\UrlTemplate\Helpers;
 
-/**
- * Class
- */
 class UrlPartsConverter
 {
     /**
-     * @param $url
-     * @return string[]
+     * @param string $url
+     * @return array|false|int|string|null
      */
-    public function parse($url)
+    public function parse(string $url)
     {
         return parse_url($url);
     }
@@ -20,33 +17,25 @@ class UrlPartsConverter
      * @param array $urlFragments
      * @return string
      */
-    public function buildUrlFromParseUrlParts(array $urlFragments)
+    public function buildUrlFromParseUrlParts(array $urlFragments): string
     {
         return $this->buildUrlHostFromParseUrlParts($urlFragments) . $this->buildUrlPathFromParseUrlParts($urlFragments);
     }
 
-    /**
-     * @param array $urlFragments
-     * @return string
-     */
-    public function buildUrlHostFromParseUrlParts(array $urlFragments)
+    public function buildUrlHostFromParseUrlParts(array $urlFragments): string
     {
         return (isset($urlFragments['scheme']) ? $urlFragments['scheme'] . ":" : '') .
             ((isset($urlFragments['user']) || isset($urlFragments['host'])) ? '//' : '') .
-            (isset($urlFragments['user']) ? $urlFragments['user'] : '') .
+            ($urlFragments['user'] ?? '') .
             (isset($urlFragments['pass']) ? ":" . $urlFragments['pass'] : '') .
             (isset($urlFragments['user']) ? '@' : '') .
-            (isset($urlFragments['host']) ? $urlFragments['host'] : '') .
+            ($urlFragments['host'] ?? '') .
             (isset($urlFragments['port']) ? ":" . $urlFragments['port'] : '');
     }
 
-    /**
-     * @param array $urlFragments
-     * @return string
-     */
-    public function buildUrlPathFromParseUrlParts(array $urlFragments)
+    public function buildUrlPathFromParseUrlParts(array $urlFragments): string
     {
-        return (isset($urlFragments['path']) ? $urlFragments['path'] : '') .
+        return ($urlFragments['path'] ?? '') .
             (!empty($urlFragments['query']) ? "?" . $urlFragments['query'] : '') .
             (isset($urlFragments['fragment']) ? "#" . $urlFragments['fragment'] : '');
     }

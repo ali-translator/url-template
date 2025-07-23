@@ -7,9 +7,6 @@ use ALI\UrlTemplate\UrlTemplateConfig;
 use ALI\UrlTemplate\UrlTemplateResolver;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Class
- */
 class UrlTemplateResolver_WithDecorators_Test extends TestCase
 {
     /**

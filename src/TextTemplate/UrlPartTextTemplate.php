@@ -73,7 +73,7 @@ class UrlPartTextTemplate
         $parameterKey = $this->textTemplate->getParameterKey($parameterName);
         switch ($urlType) {
             case UrlPartType::TYPE_HOST:
-                $urlPart = str_replace($parameterKey . '.', null, $urlPart);
+                $urlPart = str_replace($parameterKey . '.', '', $urlPart);
                 break;
             case UrlPartType::TYPE_PATH:
                 $urlPart = str_replace(
@@ -81,15 +81,15 @@ class UrlPartTextTemplate
                         $parameterKey . '/',
                         '/' . $parameterKey,],
                     [
-                        null,
-                        null,
+                        '',
+                        '',
                     ],
                     $urlPart,
                     $replaceCount
                 );
                 if (!$replaceCount) {
                     // Parameter in one namespace with other parameter
-                    $urlPart = str_replace($parameterKey, null, $urlPart);
+                    $urlPart = str_replace($parameterKey, '', $urlPart);
                 }
                 break;
         }
